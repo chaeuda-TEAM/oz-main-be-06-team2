@@ -5,7 +5,21 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 if not os.path.exists(".env"):
-    raise FileNotFoundError("Please create a .env file")
+    with open(".env", "w") as env_file:
+        env_file.write("AWS_RDS_NAME=\n")
+        env_file.write("AWS_RDS_USER=\n")
+        env_file.write("AWS_RDS_PASSWORD=\n")
+        env_file.write("AWS_RDS_HOST=\n")
+        env_file.write("AWS_RDS_PORT=\n")
+        env_file.write("\n")
+        env_file.write("DJANGO_SECRET_KEY= somekey\n")
+        env_file.write("DJANGO_SETTINGS_MODULE=a_core.settings.development\n")
+        env_file.write("\n")
+        env_file.write("AUTH_GOOGLE_CLIENT_ID=\n")
+        env_file.write("AUTH_GOOGLE_CLIENT_SECRET=\n")
+        env_file.write("\n")
+        env_file.write("SERVER_BASE_URL=https://api.chaeuda.shop\n")
+        env_file.write("SERVER_BASE_URL_DEV=http://127.0.0.1:5174\n")
 
 # .env 파일 로드
 load_dotenv()
