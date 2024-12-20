@@ -15,7 +15,7 @@ services:
     networks:
       - backend-network
     environment:
-      - DJANGO_SETTINGS_MODULE=a_core.settings.product
+      - DJANGO_SETTINGS_MODULE=a_core.settings.development
 
   nginx:
     image: nginx:1.21-alpine
