@@ -6,8 +6,8 @@ from .legal import router as legal_router
 from .users import router as user_router
 
 api = NinjaAPI(
-    title="Auto Posting API",
-    description="Auto Posting API documentation",
+    title="chaeuda API",
+    description="chaeuda API documentation",
     version="1.0.0",
 )
 
