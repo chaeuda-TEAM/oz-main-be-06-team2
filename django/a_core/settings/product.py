@@ -6,9 +6,9 @@ DEBUG = False
 SERVER_BASE_URL = os.getenv("SERVER_BASE_URL")
 
 
-ALLOWED_HOSTS = ["somedomain.com", "api.somedomain.com", "localhost", "127.0.0.1"]
-CORS_ALLOWED_ORIGINS = ["https://somedomain.com", "https://api.somedomain.com"]
-CSRF_TRUSTED_ORIGINS = ["https://somedomain.com", "https://api.somedomain.com"]
+ALLOWED_HOSTS = ["chaeuda.shop", "api.chaeuda.shop", "localhost", "127.0.0.1"]
+CORS_ALLOWED_ORIGINS = ["https://chaeuda.shop", "https://api.chaeuda.shop"]
+CSRF_TRUSTED_ORIGINS = ["https://chaeuda.shop", "https://api.chaeuda.shop"]
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True  # 쿠키 및 인증 헤더를 허용합니다.
@@ -18,8 +18,8 @@ SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
 CSRF_COOKIE_SECURE = True  # HTTPS에서만 CSRF 쿠키 전송
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SESSION_COOKIE_DOMAIN = ".somedomain.com"
-CSRF_COOKIE_DOMAIN = ".somedomain.com"
+SESSION_COOKIE_DOMAIN = ".chaeuda.shop"
+CSRF_COOKIE_DOMAIN = ".chaeuda.shop"
 
 CORS_ALLOW_METHODS = [
     "DELETE",
