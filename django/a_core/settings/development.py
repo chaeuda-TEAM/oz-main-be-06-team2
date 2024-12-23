@@ -8,6 +8,7 @@ SERVER_BASE_URL = "http://localhost:8000"
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://localhost:3000",
     "http://localhost:8000",
     "https://api.chaeuda.shop",
     "https://chaeuda.shop",

@@ -103,3 +103,11 @@ def find_user_id(request, data: FindUserIdSchema):
     아이디 찾기 엔드포인트
     """
     return UserService.find_user_id(data.username, data.email)
+
+
+@router.post("/withdraw", response=dict)
+def withdraw(request, data: WithdrawalSchema):
+    """
+    회원 탈퇴 엔드포인트
+    """
+    return UserService.withdraw_user(request, data)
