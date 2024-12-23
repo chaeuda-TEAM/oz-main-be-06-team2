@@ -3,6 +3,10 @@ from typing import Optional
 from ninja import Schema
 
 
+class EmailVerificationRequestSchema(Schema):
+    email: str
+
+
 class SignupSchema(Schema):
     username: str
     user_id: str
@@ -13,7 +17,7 @@ class SignupSchema(Schema):
 
 
 class LoginSchema(Schema):
-    email: str
+    user_id: str
     password: str
 
 
