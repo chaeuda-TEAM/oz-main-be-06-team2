@@ -74,32 +74,36 @@ class UserService:
 
             refresh = RefreshToken.for_user(user)
 
-            return {
-                "success": True,
-                "message": "인증된 사용자입니다.",
-                "tokens": {
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
-                },
-                "user": {
-                    "email": user.email,
-                    "username": user.username,
-                    "user_id": user.user_id,
-                },
-            }
+            if not user.is_active:
+                return {"success": False, "message": "탈퇴한 사용자입니다."}
+            else:
+                return {
+                    "success": True,
+                    "message": "인증된 사용자입니다.",
+                    "tokens": {
+                        "access": str(refresh.access_token),
+                        "refresh": str(refresh),
+                    },
+                    "user": {
+                        "email": user.email,
+                        "username": user.username,
+                        "user_id": user.user_id,
+                    },
+                }
         except Exception as e:
             return {"success": False, "message": str(e)}
 
     @staticmethod
     def signup(data: SignupSchema):
         try:
-            # 이메일 인증 확인
+            # 이메일 인증 코드 확인
             verification = EmailVerification.objects.filter(
-                email=data.email, is_verified=True
+                email=data.email,
+                verification_code=data.code,
             ).exists()
 
             if not verification:
-                raise ValueError("이메일 인증이 필요합니다.")
+                raise ValueError("유효하지 않은 이메일 인증 코드입니다.")
 
             # 비밀번호 확인 검증
             if data.password != data.password_confirm:
@@ -111,14 +115,6 @@ class UserService:
             except ValidationError:
                 raise ValueError("유효하지 않은 이메일 형식입니다.")
 
-            # 사용자 ID 중복 검사
-            if User.objects.filter(user_id=data.user_id).exists():
-                raise ValueError("이미 사용 중인 사용자 ID입니다.")
-
-            # 이메일 중복 검사
-            if User.objects.filter(email=data.email).exists():
-                raise ValueError("이미 사용 중인 이메일입니다.")
-
             # 비밀번호 복잡성 검사
             if len(data.password) < 8:
                 raise ValueError("비밀번호는 최소 8자 이상이어야 합니다.")
@@ -128,15 +124,31 @@ class UserService:
             if not phone_pattern.match(data.phone_number):
                 raise ValueError("유효하지 않은 전화번호 형식입니다.")
 
-            # 사용자 생성
-            user = User.objects.create_user(
-                username=data.username,
-                user_id=data.user_id,
-                email=data.email,
-                password=data.password,
-                phone_number=data.phone_number,
-                is_email_verified=True,
-            )
+            # 사용자 ID 중복 검사 - 탈퇴한 사용자 확인
+            existing_user = User.objects.filter(user_id=data.user_id).first()
+            if existing_user:
+                if existing_user.is_active:
+                    raise ValueError("이미 사용 중인 사용자 ID입니다.")
+                else:
+                    # 탈퇴한 사용자의 경우 계정 재활성화
+                    existing_user.is_active = True
+                    existing_user.username = data.username
+                    existing_user.email = data.email
+                    existing_user.phone_number = data.phone_number
+                    existing_user.set_password(data.password)
+                    existing_user.save()
+                    user = existing_user
+
+            else:
+                # 새로운 사용자 생성
+                user = User.objects.create_user(
+                    username=data.username,
+                    user_id=data.user_id,
+                    email=data.email,
+                    password=data.password,
+                    phone_number=data.phone_number,
+                    is_email_verified=True,
+                )
 
             # JWT 토큰 생성
             refresh = RefreshToken.for_user(user)
@@ -207,7 +219,7 @@ class UserService:
         except User.DoesNotExist:
             return {
                 "success": False,
-                "message": "입력하신 정보와 일치하는 사용자가 없습니다.",
+                "message": "입력하신 정보와 일���하는 사용자가 없습니다.",
             }
         except Exception as e:
             return {
@@ -218,7 +230,18 @@ class UserService:
     @staticmethod
     def withdraw_user(request, data: WithdrawalSchema):
         try:
-            user = request.user
+            user = request.auth
+            if not user:
+                return {"success": False, "message": "인증되지 않은 사용자입니다."}
+
+            access_token = AccessToken(user)
+            user_id = access_token["user_id"]
+
+            user = User.objects.get(id=user_id)
+
+            # 인증되지 않은 사용자 체크
+            if not user.is_authenticated:
+                return {"success": False, "message": "인증되지 않은 사용자입니다."}
 
             # 비밀번호 확인
             if not user.check_password(data.password):
@@ -228,7 +251,7 @@ class UserService:
             user.is_active = False
             user.save()
 
-            # 로그아웃 처리를 위한 토큰 무효화
+            # 로그아웃 처리를 위한 토�� 무효화
             RefreshToken.for_user(user)
 
             return {"success": True, "message": "회원 탈퇴가 완료되었습니다."}

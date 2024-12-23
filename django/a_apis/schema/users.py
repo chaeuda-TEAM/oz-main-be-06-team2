@@ -14,6 +14,7 @@ class SignupSchema(Schema):
     password_confirm: str
     phone_number: str
     email: str
+    code: str
 
 
 class LoginSchema(Schema):
@@ -60,3 +61,8 @@ class FindUserIdSchema(Schema):
 
 class WithdrawalSchema(Schema):
     password: str
+
+
+class EmailVerificationSchema(Schema):
+    email: str
+    code: str

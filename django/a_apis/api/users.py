@@ -82,19 +82,19 @@ def request_email_verification(request, data: EmailVerificationRequestSchema):
     return EmailService.send_verification_email(data.email)
 
 
-@nomal_router.get("/verify-email", response=dict)
-def verify_email(request, code: str):
+@nomal_router.post("/verify-email", response=dict)
+def verify_email(request, data: EmailVerificationSchema):
     """
-    이메일 인증 확인 엔드포인트
+    이메일 인증번호 확인 엔드포인트
 
     Args:
         request: HTTP 요청 객체
-        code: 이메일 인증 코드
+        data: 이메일과 인증번호 데이터
 
     Returns:
         dict: 이메일 인증 확인 결과
     """
-    return EmailService.verify_email(code)
+    return EmailService.verify_email(data.email, data.code)
 
 
 @nomal_router.post("/find-user-id", response=dict)
