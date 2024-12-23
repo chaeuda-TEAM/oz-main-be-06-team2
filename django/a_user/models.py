@@ -19,4 +19,4 @@ class User(AbstractUser, CommonModel):
         verbose_name_plural = "users"
 
     def __str__(self):
-        return self.email
+        return self.user_id

@@ -1,13 +1,16 @@
 import re
 
 from a_apis.auth.cookies import create_auth_response
-from a_apis.schema.users import SignupSchema
+from a_apis.models.email_verification import EmailVerification
+from a_apis.schema.users import LoginSchema, SignupSchema
 from allauth.account.models import EmailAddress
 from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
 from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.db import IntegrityError
 
@@ -16,25 +19,8 @@ User = get_user_model()
 
 class UserService:
     @staticmethod
-    def create_user(email: str, password: str, nickname: str):
-        try:
-            user = User.objects.create_user(
-                username=email, email=email, password=password, nickname=nickname
-            )
-            email_address = EmailAddress.objects.create(
-                user=user, email=email, primary=True, verified=False
-            )
-            email_address.send_confirmation()
-            return {
-                "success": True,
-                "message": "회원가입이 완료되었습니다. 이메일을 확인해주세요.",
-            }
-        except Exception as e:
-            return {"success": False, "message": str(e)}
-
-    @staticmethod
-    def login_user(request, email: str, password: str):
-        user = authenticate(request, username=email, password=password)
+    def login_user(request, data: LoginSchema):
+        user = authenticate(request, username=data.user_id, password=data.password)
         if user:
             email_address = EmailAddress.objects.filter(user=user, primary=True).first()
             if email_address and email_address.verified:
@@ -47,9 +33,14 @@ class UserService:
                         "access": str(refresh.access_token),
                         "refresh": str(refresh),
                     },
+                    "user": {
+                        "email": user.email,
+                        "username": user.username,
+                        "user_id": user.user_id,
+                    },
                 }
             return {"success": False, "message": "이메일 인증이 필요합니다."}
-        return {"success": False, "message": "이메일 또는 비밀번호가 잘못되었습니다."}
+        return {"success": False, "message": "아이디 또는 비밀번호가 잘못되었습니다."}
 
     @staticmethod
     def refresh_token(refresh_token: str):
@@ -76,17 +67,25 @@ class UserService:
             if not user:
                 return {"success": False, "message": "인증되지 않은 사용자입니다."}
 
-            from rest_framework_simplejwt.tokens import AccessToken
-
             access_token = AccessToken(user)
             user_id = access_token["user_id"]
 
             user = User.objects.get(id=user_id)
 
+            refresh = RefreshToken.for_user(user)
+
             return {
                 "success": True,
                 "message": "인증된 사용자입니다.",
-                "user": {"email": user.email},
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
+                "user": {
+                    "email": user.email,
+                    "username": user.username,
+                    "user_id": user.user_id,
+                },
             }
         except Exception as e:
             return {"success": False, "message": str(e)}
@@ -94,6 +93,14 @@ class UserService:
     @staticmethod
     def signup(data: SignupSchema):
         try:
+            # 이메일 인증 확인
+            verification = EmailVerification.objects.filter(
+                email=data.email, is_verified=True
+            ).exists()
+
+            if not verification:
+                raise ValueError("이메일 인증이 필요합니다.")
+
             # 비밀번호 확인 검증
             if data.password != data.password_confirm:
                 raise ValueError("비밀번호가 일치하지 않습니다.")
@@ -128,6 +135,7 @@ class UserService:
                 email=data.email,
                 password=data.password,
                 phone_number=data.phone_number,
+                is_email_verified=True,
             )
 
             # JWT 토큰 생성
@@ -152,4 +160,57 @@ class UserService:
             return {
                 "success": False,
                 "message": "회원가입 처리 중 오류가 발생했습니다.",
+            }
+
+    @staticmethod
+    def find_user_id(username: str, email: str) -> dict:
+        try:
+            user = User.objects.get(username=username, email=email)
+
+            # 이메일 내용 구성
+            subject = "회원님의 아이디를 알려드립니다"
+            message = f"""
+                안녕하세요, {username}님
+                
+                회원님의 아이디는 다음과 같습니다:
+                {user.user_id}
+                
+                로그인 페이지에서 위 아이디로 로그인해주세요.
+            """
+            html_message = f"""
+                <html>
+                    <body>
+                        <h2>회원 아이디 안내</h2>
+                        <p>안녕하세요, {username}님</p>
+                        <p>회원님의 아이디는 다음과 같습니다:</p>
+                        <h3>{user.user_id}</h3>
+                        <p>로그인 페이지에서 위 아이디로 로그인해주세요.</p>
+                    </body>
+                </html>
+            """
+
+            # 이메일 전송
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+
+            return {
+                "success": True,
+                "message": "입력하신 이메일로 아이디를 발송했습니다. 이메일을 확인해주세요.",
+            }
+
+        except User.DoesNotExist:
+            return {
+                "success": False,
+                "message": "입력하신 정보와 일치하는 사용자가 없습니다.",
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"처리 중 오류가 발생했습니다: {str(e)}",
             }
