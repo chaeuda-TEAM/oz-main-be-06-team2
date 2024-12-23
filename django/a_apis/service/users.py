@@ -122,7 +122,7 @@ class UserService:
                 raise ValueError("이미 사용 중인 사용자 ID입니다.")
 
             # 이메일 중복 검사 수정 - 소프트 딜리트된 계정 제외
-            if User.objects.filter(email=data.email, is_deleted=False).exists():
+            if User.objects.filter(email=data.email, is_active=False).exists():
                 raise ValueError("이미 사용 중인 이메일입니다.")
 
             # 비밀번호 복잡성 검사
@@ -135,14 +135,11 @@ class UserService:
                 raise ValueError("유효하지 않은 전화번호 형식입니다.")
 
             # 소프트 딜리트된 계정 확인 및 복구
-            deleted_user = User.objects.filter(
-                email=data.email, is_deleted=True
-            ).first()
+            deleted_user = User.objects.filter(email=data.email, is_active=True).first()
 
             if deleted_user:
                 # 기존 계정 복구
                 deleted_user.is_active = True
-                deleted_user.is_deleted = False
                 deleted_user.username = data.username
                 deleted_user.user_id = data.user_id
                 deleted_user.phone_number = data.phone_number
