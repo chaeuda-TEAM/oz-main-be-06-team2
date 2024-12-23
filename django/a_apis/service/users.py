@@ -2,7 +2,7 @@ import re
 
 from a_apis.auth.cookies import create_auth_response
 from a_apis.models.email_verification import EmailVerification
-from a_apis.schema.users import LoginSchema, SignupSchema
+from a_apis.schema.users import LoginSchema, SignupSchema, WithdrawalSchema
 from allauth.account.models import EmailAddress
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
@@ -213,4 +213,28 @@ class UserService:
             return {
                 "success": False,
                 "message": f"처리 중 오류가 발생했습니다: {str(e)}",
+            }
+
+    @staticmethod
+    def withdraw_user(request, data: WithdrawalSchema):
+        try:
+            user = request.user
+
+            # 비밀번호 확인
+            if not user.check_password(data.password):
+                return {"success": False, "message": "비밀번호가 일치하지 않습니다."}
+
+            # 소프트 딜리트 처리
+            user.is_active = False
+            user.save()
+
+            # 로그아웃 처리를 위한 토큰 무효화
+            RefreshToken.for_user(user)
+
+            return {"success": True, "message": "회원 탈퇴가 완료되었습니다."}
+
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"회원 탈퇴 처리 중 오류가 발생했습니다: {str(e)}",
             }
