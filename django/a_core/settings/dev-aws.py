@@ -30,12 +30,12 @@ SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 SECURE_PROXY_SSL_HEADER = None  # SSL 프록시 헤더 비활성화
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
