@@ -66,3 +66,7 @@ class WithdrawalSchema(Schema):
 class EmailVerificationSchema(Schema):
     email: str
     code: str
+
+
+class LogoutSchema(Schema):
+    refresh_token: str

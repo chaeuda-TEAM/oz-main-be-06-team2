@@ -1,10 +1,20 @@
 import re
+from datetime import datetime
 
 from a_apis.auth.cookies import create_auth_response
 from a_apis.models.email_verification import EmailVerification
-from a_apis.schema.users import LoginSchema, SignupSchema, WithdrawalSchema
+from a_apis.schema.users import (
+    LoginSchema,
+    LogoutSchema,
+    SignupSchema,
+    WithdrawalSchema,
+)
 from allauth.account.models import EmailAddress
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from django.conf import settings
@@ -219,7 +229,7 @@ class UserService:
         except User.DoesNotExist:
             return {
                 "success": False,
-                "message": "입력하신 정보와 일���하는 사용자가 없습니다.",
+                "message": "입력하신 정보와 일치하는 사용자가 없습니다.",
             }
         except Exception as e:
             return {
@@ -251,7 +261,7 @@ class UserService:
             user.is_active = False
             user.save()
 
-            # 로그아웃 처리를 위한 토�� 무효화
+            # 로그아웃 처리를 위한 토큰 무효화
             RefreshToken.for_user(user)
 
             return {"success": True, "message": "회원 탈퇴가 완료되었습니다."}
@@ -260,4 +270,26 @@ class UserService:
             return {
                 "success": False,
                 "message": f"회원 탈퇴 처리 중 오류가 발생했습니다: {str(e)}",
+            }
+
+    @staticmethod
+    def logout_user(data: LogoutSchema):
+        try:
+            token = RefreshToken(data.refresh_token)
+            outstanding_token = OutstandingToken.objects.create(
+                token=str(token),
+                user_id=token["user_id"],
+                jti=token["jti"],
+                expires_at=datetime.fromtimestamp(token["exp"]),
+            )
+            BlacklistedToken.objects.create(token=outstanding_token)
+
+            return {"success": True, "message": "로그아웃 되었습니다."}
+
+        except TokenError:
+            return {"success": False, "message": "유효하지 않은 토큰입니다."}
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"로그아웃 처리 중 오류가 발생했습니다: {str(e)}",
             }
