@@ -1,7 +1,7 @@
 # 프로젝트 테스트
 - 레포지토리 복사하기
 ```
-git clone https://github.com/oz-06/MERN-06-BE.git
+git clone git@github.com:chaeuda-TEAM/oz-main-be-06-team2.git
 ```
 
 - 폴더 이동
