@@ -51,3 +51,8 @@ class TokenResponseSchema(Schema):
     success: bool
     message: str
     tokens: Optional[TokenSchema] = None
+
+
+class FindUserIdSchema(Schema):
+    username: str
+    email: str

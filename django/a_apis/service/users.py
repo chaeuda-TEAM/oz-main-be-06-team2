@@ -7,8 +7,10 @@ from allauth.account.models import EmailAddress
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
+from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
 from django.core.exceptions import ValidationError
+from django.core.mail import send_mail
 from django.core.validators import validate_email
 from django.db import IntegrityError
 
@@ -158,4 +160,57 @@ class UserService:
             return {
                 "success": False,
                 "message": "회원가입 처리 중 오류가 발생했습니다.",
+            }
+
+    @staticmethod
+    def find_user_id(username: str, email: str) -> dict:
+        try:
+            user = User.objects.get(username=username, email=email)
+
+            # 이메일 내용 구성
+            subject = "회원님의 아이디를 알려드립니다"
+            message = f"""
+                안녕하세요, {username}님
+                
+                회원님의 아이디는 다음과 같습니다:
+                {user.user_id}
+                
+                로그인 페이지에서 위 아이디로 로그인해주세요.
+            """
+            html_message = f"""
+                <html>
+                    <body>
+                        <h2>회원 아이디 안내</h2>
+                        <p>안녕하세요, {username}님</p>
+                        <p>회원님의 아이디는 다음과 같습니다:</p>
+                        <h3>{user.user_id}</h3>
+                        <p>로그인 페이지에서 위 아이디로 로그인해주세요.</p>
+                    </body>
+                </html>
+            """
+
+            # 이메일 전송
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+
+            return {
+                "success": True,
+                "message": "입력하신 이메일로 아이디를 발송했습니다. 이메일을 확인해주세요.",
+            }
+
+        except User.DoesNotExist:
+            return {
+                "success": False,
+                "message": "입력하신 정보와 일치하는 사용자가 없습니다.",
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"처리 중 오류가 발생했습니다: {str(e)}",
             }

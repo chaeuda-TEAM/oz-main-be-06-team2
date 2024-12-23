@@ -95,3 +95,11 @@ def verify_email(request, code: str):
         dict: 이메일 인증 확인 결과
     """
     return EmailService.verify_email(code)
+
+
+@nomal_router.post("/find-user-id", response=dict)
+def find_user_id(request, data: FindUserIdSchema):
+    """
+    아이디 찾기 엔드포인트
+    """
+    return UserService.find_user_id(data.username, data.email)
