@@ -1,4 +1,4 @@
-import uuid
+import random
 from datetime import timedelta
 
 from a_common.models import CommonModel
@@ -9,7 +9,7 @@ from django.utils import timezone
 
 class EmailVerification(CommonModel):
     email = models.EmailField()
-    verification_code = models.UUIDField(default=uuid.uuid4, editable=False)
+    verification_code = models.CharField(max_length=6)
     is_verified = models.BooleanField(default=False)
     expires_at = models.DateTimeField()
 
@@ -18,7 +18,8 @@ class EmailVerification(CommonModel):
 
     def save(self, *args, **kwargs):
         if not self.pk:  # Only set expires_at when creating new object
-            self.expires_at = timezone.now() + timedelta(hours=24)
+            self.verification_code = str(random.randint(100000, 999999))
+            self.expires_at = timezone.now() + timedelta(minutes=30)
         super().save(*args, **kwargs)
 
     @property

@@ -16,21 +16,26 @@ class EmailService:
             verification = EmailVerification.objects.create(email=email)
 
             # 이메일 내용 구성
-            verification_link = f"{settings.SERVER_BASE_URL}/api/users/verify-email?code={verification.verification_code}"
-            subject = "이메일 인증을 완료해주세요"
+            subject = "이메일 인증번호 안내"
             message = f"""
-                이메일 인증을 완료하려면 아래 링크를 클릭하세요:
-                {verification_link}
+                안녕하세요.
                 
-                이 링크는 24시간 동안 유효합니다.
+                회원가입을 위한 인증번호는 다음과 같습니다:
+                
+                인증번호: {verification.verification_code}
+                
+                이 인증번호는 30분 동안 유효합니다.
             """
             html_message = f"""
                 <html>
                     <body>
-                        <h2>이메일 인증</h2>
-                        <p>아래 링크를 클릭하여 이메일 인증을 완료해주세요:</p>
-                        <a href="{verification_link}">이메일 인증하기</a>
-                        <p>이 링크는 24시간 동안 유효합니다.</p>
+                        <h2>이메일 인증번호 안내</h2>
+                        <p>안녕하세요.</p>
+                        <p>회원가입을 위한 인증번호는 다음과 같습니다:</p>
+                        <h3 style="color: #4A90E2; font-size: 24px; letter-spacing: 3px;">
+                            {verification.verification_code}
+                        </h3>
+                        <p>이 인증번호는 30분 동안 유효합니다.</p>
                     </body>
                 </html>
             """
@@ -47,7 +52,7 @@ class EmailService:
 
             return {
                 "success": True,
-                "message": "인증 이메일이 발송되었습니다. 이메일을 확인해주세요.",
+                "message": "인증번호가 이메일로 발송되었습니다. 이메일을 확인해주세요.",
             }
 
         except Exception as e:
@@ -57,16 +62,16 @@ class EmailService:
             }
 
     @staticmethod
-    def verify_email(verification_code: str) -> dict:
+    def verify_email(email: str, code: str) -> dict:
         try:
             verification = EmailVerification.objects.get(
-                verification_code=verification_code, is_verified=False
+                email=email, verification_code=code, is_verified=False
             )
 
             if verification.is_expired:
                 return {
                     "success": False,
-                    "message": "인증 코드가 만료되었습니다. 다시 시도해주세요.",
+                    "message": "인증번호가 만료되었습니다. 다시 시도해주세요.",
                 }
 
             verification.is_verified = True
@@ -75,7 +80,7 @@ class EmailService:
             return {"success": True, "message": "이메일 인증이 완료되었습니다."}
 
         except EmailVerification.DoesNotExist:
-            return {"success": False, "message": "유효하지 않은 인증 코드입니다."}
+            return {"success": False, "message": "유효하지 않은 인증번호입니다."}
         except Exception as e:
             return {
                 "success": False,
