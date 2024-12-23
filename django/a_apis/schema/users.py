@@ -56,3 +56,7 @@ class TokenResponseSchema(Schema):
 class FindUserIdSchema(Schema):
     username: str
     email: str
+
+
+class WithdrawalSchema(Schema):
+    password: str
