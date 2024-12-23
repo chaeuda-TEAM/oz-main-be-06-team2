@@ -111,3 +111,15 @@ def withdraw(request, data: WithdrawalSchema):
     회원 탈퇴 엔드포인트
     """
     return UserService.withdraw_user(request, data)
+
+
+@nomal_router.post("/logout", response=dict)
+def logout(request, data: LogoutSchema):
+    """
+    로그아웃 엔드포인트 (리프래쉬토큰만 받아서 블랙리스트에 추가)
+    args:
+        data: 로그아웃 데이터 (LogoutSchema)
+    returns:
+        dict: 로그아웃 결과
+    """
+    return UserService.logout_user(data)
