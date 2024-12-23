@@ -7,8 +7,20 @@ SERVER_BASE_URL = os.getenv("SERVER_BASE_URL")
 
 
 ALLOWED_HOSTS = ["chaeuda.shop", "api.chaeuda.shop", "localhost", "127.0.0.1"]
-CORS_ALLOWED_ORIGINS = ["https://chaeuda.shop", "https://api.chaeuda.shop"]
-CSRF_TRUSTED_ORIGINS = ["https://chaeuda.shop", "https://api.chaeuda.shop"]
+CORS_ALLOWED_ORIGINS = [
+    "https://chaeuda.shop",
+    "https://api.chaeuda.shop",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://chaeuda.shop",
+    "https://api.chaeuda.shop",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True  # 쿠키 및 인증 헤더를 허용합니다.
