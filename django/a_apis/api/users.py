@@ -34,7 +34,7 @@ def get_user(request):
     return UserService.get_user(request)
 
 
-@router.post("/refresh", response=TokenResponseSchema)
+@nomal_router.post("/refresh", response=TokenResponseSchema)
 def refresh_token(request, data: RefreshTokenSchema):
     return UserService.refresh_token(data.refresh)
 

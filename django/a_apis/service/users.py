@@ -3,8 +3,9 @@ import re
 from a_apis.auth.cookies import create_auth_response
 from a_apis.models.email_verification import EmailVerification
 from a_apis.schema.users import LoginSchema, SignupSchema
+from allauth.account.models import EmailAddress
 from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from django.contrib.auth import authenticate, get_user_model, login
 from django.core.exceptions import ValidationError
@@ -19,21 +20,24 @@ class UserService:
     def login_user(request, data: LoginSchema):
         user = authenticate(request, username=data.user_id, password=data.password)
         if user:
-            login(request, user)
-            refresh = RefreshToken.for_user(user)
-            return {
-                "success": True,
-                "message": "로그인 되었습니다.",
-                "tokens": {
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
-                },
-                "user": {
-                    "email": user.email,
-                    "username": user.username,
-                    "user_id": user.user_id,
-                },
-            }
+            email_address = EmailAddress.objects.filter(user=user, primary=True).first()
+            if email_address and email_address.verified:
+                login(request, user)
+                refresh = RefreshToken.for_user(user)
+                return {
+                    "success": True,
+                    "message": "로그인 되었습니다.",
+                    "tokens": {
+                        "access": str(refresh.access_token),
+                        "refresh": str(refresh),
+                    },
+                    "user": {
+                        "email": user.email,
+                        "username": user.username,
+                        "user_id": user.user_id,
+                    },
+                }
+            return {"success": False, "message": "이메일 인증이 필요합니다."}
         return {"success": False, "message": "아이디 또는 비밀번호가 잘못되었습니다."}
 
     @staticmethod
@@ -61,17 +65,25 @@ class UserService:
             if not user:
                 return {"success": False, "message": "인증되지 않은 사용자입니다."}
 
-            from rest_framework_simplejwt.tokens import AccessToken
-
             access_token = AccessToken(user)
             user_id = access_token["user_id"]
 
             user = User.objects.get(id=user_id)
 
+            refresh = RefreshToken.for_user(user)
+
             return {
                 "success": True,
                 "message": "인증된 사용자입니다.",
-                "user": {"email": user.email},
+                "tokens": {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
+                "user": {
+                    "email": user.email,
+                    "username": user.username,
+                    "user_id": user.user_id,
+                },
             }
         except Exception as e:
             return {"success": False, "message": str(e)}
