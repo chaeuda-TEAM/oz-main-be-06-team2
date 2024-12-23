@@ -7,6 +7,21 @@ from ninja import Router
 router = Router(auth=AuthBearer())
 
 
+@router.post("/signup", response=AuthResponseSchema)
+def signup(request, data: SignupSchema):
+    """
+    회원가입 엔드포인트
+
+    Args:
+        request: HTTP 요청 객체
+        data: 회원가입 데이터 (SignupSchema)
+
+    Returns:
+        AuthResponseSchema: 회원가입 결과 및 토큰 정보
+    """
+    return UserService.signup(data)
+
+
 @router.get("/me", response=AuthResponseSchema)
 def get_user(request):
     return UserService.get_user(request)

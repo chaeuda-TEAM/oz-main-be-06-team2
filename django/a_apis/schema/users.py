@@ -4,9 +4,12 @@ from ninja import Schema
 
 
 class SignupSchema(Schema):
-    email: str
+    username: str
+    user_id: str
     password: str
-    nickname: str = None
+    password_confirm: str
+    phone_number: str
+    email: str
 
 
 class LoginSchema(Schema):
@@ -23,11 +26,17 @@ class UserSchema(Schema):
     email: str
 
 
+class UserResponseSchema(Schema):
+    email: str
+    username: str
+    user_id: str
+
+
 class AuthResponseSchema(Schema):
     success: bool
     message: str
     tokens: Optional[TokenSchema] = None
-    user: Optional[UserSchema] = None
+    user: Optional[UserResponseSchema] = None
 
 
 class RefreshTokenSchema(Schema):
