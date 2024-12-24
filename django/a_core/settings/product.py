@@ -2,10 +2,6 @@ from .base import *
 
 DEBUG = False
 
-
-SERVER_BASE_URL = os.getenv("SERVER_BASE_URL")
-
-
 ALLOWED_HOSTS = ["chaeuda.shop", "api.chaeuda.shop", "localhost", "127.0.0.1"]
 CORS_ALLOWED_ORIGINS = [
     "https://chaeuda.shop",
