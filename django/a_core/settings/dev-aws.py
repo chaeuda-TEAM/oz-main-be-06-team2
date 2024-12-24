@@ -2,7 +2,7 @@ from .base import *
 
 DEBUG = True
 
-SERVER_BASE_URL = "http://localhost:8000"
+SERVER_BASE_URL = "http://localhost:3000"
 
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
