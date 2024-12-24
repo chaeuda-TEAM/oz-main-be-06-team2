@@ -29,10 +29,17 @@ RUN poetry install --no-interaction --no-ansi
 # Copy the Django project
 COPY django/ /app/
 
+# Set environment variable for Django settings
+ENV DJANGO_SETTINGS_MODULE=a_core.settings.product
+
+# Create directory for static files
+RUN mkdir -p /app/static
+
+# Collect static files
+RUN python manage.py collectstatic --noinput --settings=a_core.settings.product
 
 # Expose port 8000
 EXPOSE 8000
 
 # Define the default command to run the application
-ENV DJANGO_SETTINGS_MODULE=a_core.settings.product
 CMD ["gunicorn", "a_core.wsgi:application", "--bind", "0.0.0.0:8000"] 
