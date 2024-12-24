@@ -2,13 +2,21 @@ from .base import *
 
 DEBUG = False
 
-
-SERVER_BASE_URL = os.getenv("SERVER_BASE_URL")
-
-
 ALLOWED_HOSTS = ["chaeuda.shop", "api.chaeuda.shop", "localhost", "127.0.0.1"]
-CORS_ALLOWED_ORIGINS = ["https://chaeuda.shop", "https://api.chaeuda.shop"]
-CSRF_TRUSTED_ORIGINS = ["https://chaeuda.shop", "https://api.chaeuda.shop"]
+CORS_ALLOWED_ORIGINS = [
+    "https://chaeuda.shop",
+    "https://api.chaeuda.shop",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://chaeuda.shop",
+    "https://api.chaeuda.shop",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:8000",
+]
 
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True  # 쿠키 및 인증 헤더를 허용합니다.
@@ -57,11 +65,11 @@ DATABASES = {
 }
 
 
-AWS_ACCESS_KEY_ID = os.getenv("AWS_S3_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("AWS_S3_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_S3_STORAGE_BUCKET_NAME")
-AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME")
-AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_CLOUDFRONT_DOMAIN")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_S3_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_S3_SECRET_ACCESS_KEY", "")
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_S3_STORAGE_BUCKET_NAME", "")
+AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "")
+AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_CLOUDFRONT_DOMAIN", "")
 
 STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
 STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
@@ -85,5 +93,31 @@ STORAGES = {
     },
     "staticfiles": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+}
+
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {"format": "%(levelname)s %(asctime)s %(module)s %(message)s"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",  # 표준 출력
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",  # INFO 이상 레벨 로그를 stdout에 출력
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "propagate": False,
+            "level": "INFO",
+        },
     },
 }

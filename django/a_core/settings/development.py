@@ -3,11 +3,12 @@ from .base import *
 DEBUG = True
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "api.chaeuda.shop"]
-SERVER_BASE_URL = "http://localhost:8000"
+SERVER_BASE_URL = "http://localhost:3000"
 
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://localhost:3000",
     "http://localhost:8000",
     "https://api.chaeuda.shop",
     "https://chaeuda.shop",

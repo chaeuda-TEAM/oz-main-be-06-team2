@@ -3,17 +3,20 @@ from typing import Optional
 from ninja import Schema
 
 
+class EmailVerificationRequestSchema(Schema):
+    email: str
+
+
 class SignupSchema(Schema):
     username: str
     user_id: str
     password: str
-    password_confirm: str
     phone_number: str
     email: str
 
 
 class LoginSchema(Schema):
-    email: str
+    user_id: str
     password: str
 
 
@@ -47,3 +50,21 @@ class TokenResponseSchema(Schema):
     success: bool
     message: str
     tokens: Optional[TokenSchema] = None
+
+
+class FindUserIdSchema(Schema):
+    username: str
+    email: str
+
+
+class WithdrawalSchema(Schema):
+    password: str
+
+
+class EmailVerificationSchema(Schema):
+    email: str
+    code: str
+
+
+class LogoutSchema(Schema):
+    refresh_token: str

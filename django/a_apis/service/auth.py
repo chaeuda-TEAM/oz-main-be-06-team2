@@ -3,6 +3,7 @@ from a_apis.auth.cookies import create_auth_response
 from ninja.errors import HttpError
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 
@@ -25,7 +26,7 @@ class GoogleAuthService:
 
     @staticmethod
     def start_google_auth(server_base_url: str, client_id: str) -> str:
-        redirect_uri = f"{server_base_url}/api/auth/google/callback"
+        redirect_uri = f"{server_base_url}/auth/google/callback"
         scope = "https://www.googleapis.com/auth/userinfo.email"
         response_type = "code"
 
@@ -40,7 +41,11 @@ class GoogleAuthService:
 
     @staticmethod
     def callback_google_auth(
-        code: str, server_base_url: str, client_id: str, client_secret: str
+        code: str,
+        server_base_url: str,
+        client_id: str,
+        client_secret: str,
+        login_redirect_url: str,
     ):
         if not code:
             raise HttpError(400, "No code provided by Google")
@@ -50,7 +55,7 @@ class GoogleAuthService:
             "code": code,
             "client_id": client_id,
             "client_secret": client_secret,
-            "redirect_uri": f"{server_base_url}/api/auth/google/callback",
+            "redirect_uri": f"{server_base_url}/auth/google/callback",
             "grant_type": "authorization_code",
         }
 
@@ -70,21 +75,17 @@ class GoogleAuthService:
 
         user_info = userinfo_resp.json()
         email = user_info.get("email")
+        name = user_info.get("name", "")
         if not email:
             raise HttpError(400, "No email in user info")
-
-        name = user_info.get("name", "")
 
         user = GoogleAuthService.create_or_get_user(email=email, name=name)
         refresh = RefreshToken.for_user(user)
 
-        response_data = {
+        return {
             "success": True,
             "message": "Google 로그인 성공",
             "tokens": {"access": str(refresh.access_token), "refresh": str(refresh)},
             "user": {"email": user.email},
+            "redirect_url": login_redirect_url,
         }
-
-        return create_auth_response(
-            response_data, str(refresh.access_token), str(refresh)
-        )

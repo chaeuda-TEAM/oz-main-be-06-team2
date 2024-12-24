@@ -61,7 +61,9 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
+    "storages",
 ]
 
 INSTALLED_APPS = DEFAULT_APPS + CUSTOM_APPS + THIRD_PARTY_APPS
@@ -139,7 +141,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+
+# Media files
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# 디렉토리가 없으면 자동으로 생성
+for directory in [STATIC_ROOT, MEDIA_ROOT] + STATICFILES_DIRS:
+    os.makedirs(directory, exist_ok=True)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
@@ -156,7 +170,12 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_USERNAME_REQUIRED = False
 
 # 이메일 설정 (개발환경)
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")  # Gmail 주소
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")  # Gmail 앱 비밀번호
 
 # 사이트 설정
 SITE_ID = 1
@@ -179,8 +198,11 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
 }
 
+SERVER_BASE_URL = os.getenv("SERVER_BASE_URL", "")
+SERVER_BASE_URL_DEV = os.getenv("SERVER_BASE_URL_DEV", "")
 
-LOGIN_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = os.getenv("LOGIN_REDIRECT_URL", "")
+LOGIN_REDIRECT_URL_DEV = os.getenv("LOGIN_REDIRECT_URL_DEV", "")
 ACCOUNT_LOGOUT_ON_GET = True
 
 # 쿠키 설정

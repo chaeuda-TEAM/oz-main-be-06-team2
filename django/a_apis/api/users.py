@@ -1,13 +1,29 @@
 from a_apis.auth.bearer import AuthBearer
-from a_apis.auth.cookies import create_auth_response
 from a_apis.schema.users import *
+from a_apis.service.email import EmailService
 from a_apis.service.users import UserService
 from ninja import Router
 
+nomal_router = Router()
 router = Router(auth=AuthBearer())
 
 
-@router.post("/signup", response=AuthResponseSchema)
+@nomal_router.post("/login", response=AuthResponseSchema)
+def login(request, data: LoginSchema):
+    """
+    로그인 엔드포인트
+
+    Args:
+        request: HTTP 요청 객체
+        data: 로그인 데이터 (LoginSchema)
+
+    Returns:
+        AuthResponseSchema: 로그인 결과 및 토큰 정보
+    """
+    return UserService.login_user(request, data)
+
+
+@nomal_router.post("/signup", response=AuthResponseSchema)
 def signup(request, data: SignupSchema):
     """
     회원가입 엔드포인트
@@ -24,9 +40,86 @@ def signup(request, data: SignupSchema):
 
 @router.get("/me", response=AuthResponseSchema)
 def get_user(request):
+    """
+    사용자 정보 조회 엔드포인트
+
+    Args:
+        request: HTTP 요청 객체
+
+    Returns:
+        AuthResponseSchema: 사용자 정보 및 토큰 정보
+    """
     return UserService.get_user(request)
 
 
-@router.post("/refresh", response=TokenResponseSchema)
+@nomal_router.post("/refresh", response=TokenResponseSchema)
 def refresh_token(request, data: RefreshTokenSchema):
+    """
+    토큰 갱신 엔드포인트
+
+    Args:
+        request: HTTP 요청 객체
+        data: 토큰 데이터 (RefreshTokenSchema)
+
+    Returns:
+        TokenResponseSchema: 토큰 정보
+    """
     return UserService.refresh_token(data.refresh)
+
+
+@nomal_router.post("/request-email-verification", response=dict)
+def request_email_verification(request, data: EmailVerificationRequestSchema):
+    """
+    이메일 인증 요청 엔드포인트
+
+    Args:
+        request: HTTP 요청 객체
+        data: 이메일 인증 요청 데이터 (EmailVerificationRequestSchema)
+
+    Returns:
+        dict: 이메일 인증 요청 결과
+    """
+    return EmailService.send_verification_email(data.email)
+
+
+@nomal_router.post("/verify-email", response=dict)
+def verify_email(request, data: EmailVerificationSchema):
+    """
+    이메일 인증번호 확인 엔드포인트
+
+    Args:
+        request: HTTP 요청 객체
+        data: 이메일과 인증번호 데이터
+
+    Returns:
+        dict: 이메일 인증 확인 결과
+    """
+    return EmailService.verify_email(data.email, data.code)
+
+
+@nomal_router.post("/find-user-id", response=dict)
+def find_user_id(request, data: FindUserIdSchema):
+    """
+    아이디 찾기 엔드포인트
+    """
+    return UserService.find_user_id(data.username, data.email)
+
+
+@router.post("/withdraw", response=dict)
+def withdraw(request, data: WithdrawalSchema):
+    """
+    회원 탈퇴 엔드포인트
+    """
+    return UserService.withdraw_user(request, data)
+
+
+@nomal_router.post("/logout", response=dict)
+def logout(request, data: LogoutSchema):
+    """
+    로그아웃 엔드포인트 (리프래쉬토큰만 받아서 블랙리스트에 추가)
+    args:
+        data: 로그아웃 데이터 (LogoutSchema)
+    returns:
+        dict: 로그아웃 결과
+    """
+    return UserService.logout_user(data)
