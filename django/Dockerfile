@@ -35,8 +35,10 @@ ENV DJANGO_SETTINGS_MODULE=a_core.settings.product
 # Create directory for static files
 RUN mkdir -p /app/static
 
-# Collect static files
-RUN python manage.py collectstatic --noinput --settings=a_core.settings.product
+# Run migrations and collect static files
+RUN python manage.py makemigrations --noinput --settings=a_core.settings.product && \
+    python manage.py migrate --noinput --settings=a_core.settings.product && \
+    python manage.py collectstatic --noinput --settings=a_core.settings.product
 
 # Expose port 8000
 EXPOSE 8000
