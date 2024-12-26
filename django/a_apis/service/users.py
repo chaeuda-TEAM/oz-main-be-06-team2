@@ -126,8 +126,8 @@ class UserService:
                 raise ValueError("이미 사용 중인 이메일입니다.")
 
             # 비밀번호 복잡성 검사
-            if len(data.password) < 8:
-                raise ValueError("비밀번호는 최소 8자 이상이어야 합니다.")
+            if len(data.password) < 6:
+                raise ValueError("비밀번호는 최소 6자 이상이어야 합니다.")
 
             # 전화번호 형식 검사
             phone_pattern = re.compile(r"^01[016789]-?[0-9]{3,4}-?[0-9]{4}$")
