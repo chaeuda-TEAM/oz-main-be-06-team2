@@ -52,20 +52,34 @@ class UserService:
     @staticmethod
     def refresh_token(refresh_token: str):
         try:
-            refresh = RefreshToken(refresh_token)
+            # 기존 토큰 검증
+            token = RefreshToken(refresh_token)
+
+            # 기존 토큰 블랙리스트에 추가
+            token.blacklist()
+
+            # 새로운 토큰 발급
+            user = User.objects.get(id=token["user_id"])
+            new_refresh = RefreshToken.for_user(user)
+
             result = {
                 "success": True,
                 "message": "토큰이 갱신되었습니다.",
                 "tokens": {
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
+                    "access": str(new_refresh.access_token),
+                    "refresh": str(new_refresh),
                 },
             }
             return create_auth_response(
                 result, result["tokens"]["access"], result["tokens"]["refresh"]
             )
-        except TokenError as e:
+        except TokenError:
             return {"success": False, "message": "유효하지 않은 리프레시 토큰입니다."}
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"토큰 갱신 중 오류가 발생했습니다: {str(e)}",
+            }
 
     @staticmethod
     def get_user(request):
@@ -272,14 +286,11 @@ class UserService:
     @staticmethod
     def logout_user(data: LogoutSchema):
         try:
+            # 리프레시 토큰 검증
             token = RefreshToken(data.refresh_token)
-            outstanding_token = OutstandingToken.objects.create(
-                token=str(token),
-                user_id=token["user_id"],
-                jti=token["jti"],
-                expires_at=datetime.fromtimestamp(token["exp"]),
-            )
-            BlacklistedToken.objects.create(token=outstanding_token)
+
+            # 토큰 블랙리스트에 추가
+            token.blacklist()
 
             return {"success": True, "message": "로그아웃 되었습니다."}
 
