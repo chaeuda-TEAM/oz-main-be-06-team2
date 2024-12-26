@@ -273,6 +273,12 @@ class UserService:
     def logout_user(data: LogoutSchema):
         try:
             token = RefreshToken(data.refresh_token)
+
+            # 이미 블랙리스트에 있는지 확인
+            if BlacklistedToken.objects.filter(token__jti=token["jti"]).exists():
+                return {"success": True, "message": "이미 로그아웃된 토큰입니다."}
+
+            # 새로운 OutstandingToken 생성 및 블랙리스트에 추가
             outstanding_token = OutstandingToken.objects.create(
                 token=str(token),
                 user_id=token["user_id"],
