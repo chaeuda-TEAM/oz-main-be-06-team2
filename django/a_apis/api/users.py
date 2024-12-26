@@ -67,7 +67,7 @@ def refresh_token(request, data: RefreshTokenSchema):
     return UserService.refresh_token(data.refresh)
 
 
-@nomal_router.post("/request-email-verification", response=dict)
+@nomal_router.post("/request-email-verification", response=ErrorResponseSchema)
 def request_email_verification(request, data: EmailVerificationRequestSchema):
     """
     이메일 인증 요청 엔드포인트
@@ -82,7 +82,7 @@ def request_email_verification(request, data: EmailVerificationRequestSchema):
     return EmailService.send_verification_email(data.email)
 
 
-@nomal_router.post("/verify-email", response=dict)
+@nomal_router.post("/verify-email", response=ErrorResponseSchema)
 def verify_email(request, data: EmailVerificationSchema):
     """
     이메일 인증번호 확인 엔드포인트
@@ -97,7 +97,7 @@ def verify_email(request, data: EmailVerificationSchema):
     return EmailService.verify_email(data.email, data.code)
 
 
-@nomal_router.post("/find-user-id", response=dict)
+@nomal_router.post("/find-user-id", response=ErrorResponseSchema)
 def find_user_id(request, data: FindUserIdSchema):
     """
     아이디 찾기 엔드포인트
@@ -105,7 +105,7 @@ def find_user_id(request, data: FindUserIdSchema):
     return UserService.find_user_id(data.username, data.email)
 
 
-@router.post("/withdraw", response=dict)
+@router.post("/withdraw", response=ErrorResponseSchema)
 def withdraw(request, data: WithdrawalSchema):
     """
     회원 탈퇴 엔드포인트
@@ -113,7 +113,7 @@ def withdraw(request, data: WithdrawalSchema):
     return UserService.withdraw_user(request, data)
 
 
-@nomal_router.post("/logout", response=dict)
+@nomal_router.post("/logout", response=ErrorResponseSchema)
 def logout(request, data: LogoutSchema):
     """
     로그아웃 엔드포인트 (리프래쉬토큰만 받아서 블랙리스트에 추가)
@@ -123,3 +123,18 @@ def logout(request, data: LogoutSchema):
         dict: 로그아웃 결과
     """
     return UserService.logout_user(data)
+
+
+@nomal_router.get("/check-userid/{user_id}", response=CheckUserIdResponseSchema)
+def check_userid_availability(request, user_id: str):
+    """
+    Check if a user ID is available for registration
+
+    Args:
+        request: HTTP request object
+        user_id: User ID to check
+
+    Returns:
+        dict: Response containing availability status and message
+    """
+    return UserService.check_userid_availability(user_id)
