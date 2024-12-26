@@ -51,20 +51,32 @@ class ProductDetail(CommonModel):
         ("multi", "다세대주택"),
         ("type_etc", "기타"),
     ]
-    product_id = models.IntegerField(primary_key=True)
-    user_no = models.ForeignKey(User, on_delete=models.CASCADE)
-    pro_title = models.CharField(max_length=50)
-    pro_price = models.IntegerField()
-    pro_supply_a = models.DecimalField(max_digits=10, decimal_places=2)
-    pro_site_a = models.DecimalField(max_digits=10, decimal_places=2)
-    pro_heat = models.CharField(max_length=10, choices=HEAT_CHOICES)
-    pro_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
-    pro_floor = models.IntegerField()
-    pro_intro = models.TextField()
-    sale = models.BooleanField(default=True)
-    cost_id = models.ForeignKey(Cost, on_delete=models.CASCADE)
-    address_id = models.ForeignKey(ProductAddress, on_delete=models.CASCADE)
-    contents = models.ForeignKey(ProductContents, on_delete=models.CASCADE)
+    product_id = models.IntegerField(primary_key=True, verbose_name="상품 ID")
+    user_no = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="유저 ID")
+    pro_title = models.CharField(max_length=50, verbose_name="제목")
+    pro_price = models.IntegerField(verbose_name="매물금액")
+    pro_supply_a = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="공급면적"
+    )
+    pro_site_a = models.DecimalField(
+        max_digits=10, decimal_places=2, verbose_name="부지면적"
+    )
+    pro_heat = models.CharField(
+        max_length=10, choices=HEAT_CHOICES, verbose_name="난방방식"
+    )
+    pro_type = models.CharField(
+        max_length=10, choices=TYPE_CHOICES, verbose_name="건물유형"
+    )
+    pro_floor = models.IntegerField(verbose_name="층")
+    pro_intro = models.TextField(verbose_name="상세설명")
+    sale = models.BooleanField(default=True, verbose_name="판매여부")
+    cost_id = models.ForeignKey(Cost, on_delete=models.CASCADE, verbose_name="관리비용")
+    address_id = models.ForeignKey(
+        ProductAddress, on_delete=models.CASCADE, verbose_name="주소"
+    )
+    contents = models.ForeignKey(
+        ProductContents, on_delete=models.CASCADE, verbose_name="내용"
+    )
 
     class Meta:
         db_table = "products"
