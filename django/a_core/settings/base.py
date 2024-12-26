@@ -4,7 +4,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-if not os.path.exists(".env"):
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+env_path = os.path.join(BASE_DIR, ".env")
+
+if not os.path.exists(env_path):
     with open(".env", "w") as env_file:
         env_file.write("AWS_RDS_NAME=\n")
         env_file.write("AWS_RDS_USER=\n")
@@ -24,21 +28,14 @@ if not os.path.exists(".env"):
 # .env 파일 로드
 load_dotenv()
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 AUTH_GOOGLE_CLIENT_ID = os.getenv("AUTH_GOOGLE_CLIENT_ID")
 AUTH_GOOGLE_CLIENT_SECRET = os.getenv("AUTH_GOOGLE_CLIENT_SECRET")
+AUTH_KAKAO_CLIENT_ID = os.getenv("AUTH_KAKAO_CLIENT_ID")
+
 
 # Application definition
-
 DEFAULT_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",

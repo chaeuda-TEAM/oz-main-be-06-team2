@@ -68,3 +68,14 @@ class EmailVerificationSchema(Schema):
 
 class LogoutSchema(Schema):
     refresh_token: str
+
+
+class CheckUserIdResponseSchema(Schema):
+    success: bool
+    message: str
+    is_available: bool
+
+
+class ErrorResponseSchema(Schema):
+    success: bool
+    message: Optional[str] = None
