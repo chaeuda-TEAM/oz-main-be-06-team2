@@ -1,6 +1,5 @@
 from a_common.models import CommonModel
 from a_user.models import User
-
 from django.conf import settings
 from django.db import models
 
@@ -18,7 +17,7 @@ class Cost(CommonModel):
         return self.cost_type
 
 
-class ProductAddress(models.Model):
+class ProductAddress(CommonModel):
     address_id = models.IntegerField(primary_key=True)
     add_new = models.CharField(max_length=255)
     add_old = models.CharField(max_length=255)
@@ -33,7 +32,7 @@ class ProductAddress(models.Model):
         return self.add_new
 
 
-class ProductContents(models.Model):
+class ProductContents(CommonModel):
     contents = models.IntegerField(primary_key=True)
     img_url = models.FileField(upload_to="img/")
     video_url = models.FileField(upload_to="video/")
@@ -52,7 +51,7 @@ class ProductDetail(CommonModel):
         ("type_etc", "기타"),
     ]
     product_id = models.IntegerField(primary_key=True)
-    user_no = models.ForeignKey(User, on_delete=models.CASCADE)
+    user_no = models.ForeignKey(User.user_id, on_delete=models.CASCADE)
     pro_title = models.CharField(max_length=50)
     pro_price = models.IntegerField()
     pro_supply_a = models.DecimalField(max_digits=10, decimal_places=2)
