@@ -1,4 +1,4 @@
-from a_apis.schema.products import AddressSchema
+from a_apis.schema.products import AddressResponseSchema, AddressSchema
 from a_apis.service.products import AddressService
 from ninja import Router
 from ninja.errors import HttpError
@@ -7,7 +7,7 @@ from ninja.security import django_auth
 router = Router()
 
 
-@router.post("/save-product-address", response=dict)
+@router.post("/save-product-address", response=AddressResponseSchema)
 def save_product_address(request, data: AddressSchema):
     """
     매물 주소 저장 엔드포인트
