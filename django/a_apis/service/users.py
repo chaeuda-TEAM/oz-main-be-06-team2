@@ -226,7 +226,7 @@ class UserService:
         except User.DoesNotExist:
             return {
                 "success": False,
-                "message": "입력하신 정보와 일치하는 사용자가 없��니다.",
+                "message": "입력하신 정보와 일치하는 사용자가 없습니다.",
             }
         except Exception as e:
             return {
@@ -290,3 +290,26 @@ class UserService:
                 "success": False,
                 "message": f"로그아웃 처리 중 오류가 발생했습니다: {str(e)}",
             }
+
+    @staticmethod
+    def check_userid_availability(user_id: str) -> dict:
+        """
+        Check if a user ID is available for registration
+
+        Args:
+            user_id: User ID to check
+
+        Returns:
+            dict: Response containing availability status and message
+        """
+        if User.objects.filter(user_id=user_id).exists():
+            return {
+                "success": False,
+                "message": "이미 사용 중인 아이디입니다.",
+                "is_available": False,
+            }
+        return {
+            "success": True,
+            "message": "사용 가능한 아이디입니다.",
+            "is_available": True,
+        }
