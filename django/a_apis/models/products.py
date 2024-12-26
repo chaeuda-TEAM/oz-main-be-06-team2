@@ -40,7 +40,9 @@ class ProductAddress(CommonModel):
 class ProductContents(CommonModel):
     contents_id = models.IntegerField(primary_key=True, verbose_name="이미지/동영상 ID")
     img_url = models.FileField(upload_to="img/", verbose_name="이미지 URL")
-    video_url = models.FileField(upload_to="video/", verbose_name="동영상 URL")
+    video_url = models.FileField(
+        upload_to="video/", verbose_name="동영상 URL", blank=True, null=True
+    )  # 동영상은 필수값 아님
 
     class Meta:
         db_table = "product_contents"
@@ -48,7 +50,7 @@ class ProductContents(CommonModel):
         verbose_name_plural = "이미지/동영상"
 
     def __str__(self):
-        return self.img_url
+        return self.img_url.url
 
 
 class ProductDetail(CommonModel):
