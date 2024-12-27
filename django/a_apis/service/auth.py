@@ -1,9 +1,8 @@
 import requests
-from a_apis.auth.cookies import create_auth_response
+from a_user.models import SocialUser
 from ninja.errors import HttpError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 
@@ -14,12 +13,24 @@ class GoogleAuthService:
     @staticmethod
     def create_or_get_user(email: str, username: str) -> User:
         user, created = User.objects.get_or_create(
-            email=email, defaults={"username": email, "is_email_verified": True}
+            email=email,
+            defaults={
+                "username": username,
+                "is_email_verified": True,
+                "is_social_login": True,
+            },
         )
 
-        if created:
-            user.username = username
+        if created or (not user.is_social_login):
+            user.is_social_login = True
             user.save()
+
+            # SocialUser 생성
+            SocialUser.objects.create(
+                user=user,
+                social_id=email,
+                social_type="google",  # 'kakao' 또는 'naver'로 변경
+            )
 
         return user
 
@@ -237,7 +248,7 @@ class NaverAuthService:
 
         user_info_resp = requests.get(user_info_url, headers=headers)
         if user_info_resp.status_code != 200:
-            raise HttpError(400, "네이버에서 사용자 정보를 가져오는데 실패했습니다")
+            raise HttpError(400, "네이버에서 사용자 정보를 가져오는데 실패했습��다")
 
         user_info = user_info_resp.json()
         response = user_info.get("response")

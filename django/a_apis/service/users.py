@@ -23,6 +23,26 @@ class UserService:
     def login_user(request, data: LoginSchema):
         user = authenticate(request, username=data.email, password=data.password)
         if user:
+            if user.is_social_login:
+                try:
+                    social_user = user.social_users.first()
+                    social_type = (
+                        social_user.social_type.upper() if social_user else "소셜"
+                    )
+                    social_types = [
+                        su.social_type.upper() for su in user.social_users.all()
+                    ]
+                    social_types_str = ", ".join(social_types)
+                    return {
+                        "success": False,
+                        "message": f"{social_types_str} 로그인 사용자입니다. 소셜 로그인으로 로그인해주세요.",
+                    }
+                except Exception:
+                    return {
+                        "success": False,
+                        "message": "소셜 로그인 사용자입니다. 소셜 로그인으로 로그인해주세요.",
+                    }
+
             login(request, user)
             refresh = RefreshToken.for_user(user)
             return {
