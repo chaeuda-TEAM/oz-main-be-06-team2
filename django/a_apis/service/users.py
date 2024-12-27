@@ -131,10 +131,6 @@ class UserService:
             except ValidationError:
                 raise ValueError("유효하지 않은 이메일 형식입니다.")
 
-            # 사용자 ID 중복 검사
-            if User.objects.filter(user_id=data.user_id).exists():
-                raise ValueError("이미 사용 중인 사용자 ID입니다.")
-
             # 이메일 중복 검사 수정 - 소프트 딜리트된 계정 제외
             if User.objects.filter(email=data.email, is_active=False).exists():
                 raise ValueError("이미 사용 중인 이메일입니다.")
@@ -155,7 +151,6 @@ class UserService:
                 # 기존 계정 복구
                 deleted_user.is_active = True
                 deleted_user.username = data.username
-                deleted_user.user_id = data.user_id
                 deleted_user.phone_number = data.phone_number
                 deleted_user.set_password(data.password)
                 deleted_user.save()
@@ -164,13 +159,11 @@ class UserService:
                 # 새 사용자 생성
                 user = User.objects.create_user(
                     username=data.username,
-                    user_id=data.user_id,
                     email=data.email,
                     password=data.password,
                     phone_number=data.phone_number,
                     is_email_verified=True,
                 )
-
             # JWT 토큰 생성
             refresh = RefreshToken.for_user(user)
 
@@ -184,7 +177,6 @@ class UserService:
                 "user": {
                     "email": user.email,
                     "username": user.username,
-                    "user_id": user.user_id,
                 },
             }
         except ValueError as e:

@@ -9,7 +9,6 @@ class EmailVerificationRequestSchema(Schema):
 
 class SignupSchema(Schema):
     username: str
-    user_id: str
     password: str
     phone_number: str
     email: str
@@ -32,7 +31,6 @@ class UserSchema(Schema):
 class UserResponseSchema(Schema):
     email: str
     username: str
-    user_id: str
 
 
 class AuthResponseSchema(Schema):
