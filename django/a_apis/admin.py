@@ -10,9 +10,8 @@ admin.site.register(EmailVerification)
 # Cost 관리자 클래스
 @admin.register(Cost)
 class CostAdmin(admin.ModelAdmin):
-    list_display = ("cost_id", "cost_type", "mg_cost", "created_at", "updated_at")
+    list_display = ("cost_id", "cost_type", "mg_cost")
     search_fields = ("cost_type",)
-    list_filter = ("created_at",)
 
 
 # ProductAddress 관리자 클래스
@@ -25,7 +24,8 @@ class ProductAddressAdmin(admin.ModelAdmin):
 # ProductContents 관리자 클래스
 @admin.register(ProductContents)
 class ProductContentsAdmin(admin.ModelAdmin):
-    list_display = ("contents", "img_url", "video_url")
+    list_display = ("contents_id", "img_url", "video_url")
+    search_fields = ("content_type",)
 
 
 # ProductDetail 관리자 클래스
