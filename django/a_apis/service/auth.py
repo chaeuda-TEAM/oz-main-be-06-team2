@@ -12,14 +12,13 @@ User = get_user_model()
 
 class GoogleAuthService:
     @staticmethod
-    def create_or_get_user(email: str, name: str) -> User:
+    def create_or_get_user(email: str, username: str) -> User:
         user, created = User.objects.get_or_create(
             email=email, defaults={"username": email, "is_email_verified": True}
         )
 
         if created:
-            user.first_name = name.split()[0] if name else ""
-            user.last_name = " ".join(name.split()[1:]) if len(name.split()) > 1 else ""
+            user.username = username
             user.save()
 
         return user
@@ -27,7 +26,7 @@ class GoogleAuthService:
     @staticmethod
     def start_google_auth(server_base_url: str, client_id: str) -> str:
         redirect_uri = f"{server_base_url}/auth/google/callback"
-        scope = "https://www.googleapis.com/auth/userinfo.email"
+        scope = "https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile"
         response_type = "code"
 
         return (
@@ -74,12 +73,14 @@ class GoogleAuthService:
             raise HttpError(400, "Failed to get user info from Google")
 
         user_info = userinfo_resp.json()
+        print(user_info)
         email = user_info.get("email")
-        name = user_info.get("name", "")
+        username = user_info.get("name", "")
+
         if not email:
             raise HttpError(400, "No email in user info")
 
-        user = GoogleAuthService.create_or_get_user(email=email, name=name)
+        user = GoogleAuthService.create_or_get_user(email=email, username=username)
         refresh = RefreshToken.for_user(user)
 
         return {
@@ -93,13 +94,13 @@ class GoogleAuthService:
 
 class KakaoAuthService:
     @staticmethod
-    def create_or_get_user(email: str, nickname: str) -> User:
+    def create_or_get_user(email: str, username: str) -> User:
         user, created = User.objects.get_or_create(
-            email=email, defaults={"username": nickname, "is_email_verified": True}
+            email=email, defaults={"username": username, "is_email_verified": True}
         )
 
         if created:
-            user.first_name = nickname
+            user.username = username
             user.save()
 
         return user
@@ -162,9 +163,9 @@ class KakaoAuthService:
         if not email:
             raise HttpError(400, "이메일 정보가 없습니다")
 
-        nickname = kakao_account.get("profile", {}).get("nickname", "")
+        username = kakao_account.get("profile", {}).get("username", "")
 
-        user = KakaoAuthService.create_or_get_user(email=email, nickname=nickname)
+        user = KakaoAuthService.create_or_get_user(email=email, username=username)
         refresh = RefreshToken.for_user(user)
 
         return {
@@ -178,13 +179,13 @@ class KakaoAuthService:
 
 class NaverAuthService:
     @staticmethod
-    def create_or_get_user(email: str, nickname: str) -> User:
+    def create_or_get_user(email: str, username: str) -> User:
         user, created = User.objects.get_or_create(
-            email=email, defaults={"username": nickname, "is_email_verified": True}
+            email=email, defaults={"username": username, "is_email_verified": True}
         )
 
         if created:
-            user.first_name = nickname
+            user.username = username
             user.save()
 
         return user
@@ -247,9 +248,9 @@ class NaverAuthService:
         if not email:
             raise HttpError(400, "이메일 정보가 없습니다")
 
-        nickname = response.get("nickname", "")
+        username = response.get("username", "")
 
-        user = NaverAuthService.create_or_get_user(email=email, nickname=nickname)
+        user = NaverAuthService.create_or_get_user(email=email, username=username)
         refresh = RefreshToken.for_user(user)
 
         return {
