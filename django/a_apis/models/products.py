@@ -33,11 +33,19 @@ class ProductAddress(CommonModel):
         return self.add_new
 
 
-class ProductContents(CommonModel):
-    contents = models.IntegerField(primary_key=True)
-    img_url = models.FileField(upload_to="img/")
-    video_url = models.FileField(upload_to="video/")
+class ProductImg(CommonModel):
+    img_url = models.FileField(upload_to="img/", null=False, blank=False)
 
+    class Meta:
+        db_table = "product_img"
+        verbose_name = "이미지"
+
+class ProductVideo(CommonModel):
+    video_url = models.FileField(upload_to="video/", null=True, blank=True)
+
+    class Meta:
+        db_table = "product_video"
+        verbose_name = "동영상"
 
 class ProductDetail(CommonModel):
     HEAT_CHOICES = [
@@ -59,12 +67,13 @@ class ProductDetail(CommonModel):
     pro_site_a = models.DecimalField(max_digits=10, decimal_places=2)
     pro_heat = models.CharField(max_length=10, choices=HEAT_CHOICES)
     pro_type = models.CharField(max_length=10, choices=TYPE_CHOICES)
-    pro_floor = models.IntegerField()
+    pro_floor = models.CharField(max_length=10)
     pro_intro = models.TextField()
     sale = models.BooleanField(default=True)
     cost_id = models.ForeignKey(Cost, on_delete=models.CASCADE)
     address_id = models.ForeignKey(ProductAddress, on_delete=models.CASCADE)
-    contents = models.ForeignKey(ProductContents, on_delete=models.CASCADE)
+    pro_img = models.ForeignKey(ProductImg, on_delete=models.CASCADE)
+    pro_video = models.ForeignKey(ProductVideo, on_delete=models.CASCADE)
 
     class Meta:
         db_table = "products"
