@@ -97,14 +97,6 @@ def verify_email(request, data: EmailVerificationSchema):
     return EmailService.verify_email(data.email, data.code)
 
 
-@nomal_router.post("/find-user-id", response=ErrorResponseSchema)
-def find_user_id(request, data: FindUserIdSchema):
-    """
-    아이디 찾기 엔드포인트
-    """
-    return UserService.find_user_id(data.username, data.email)
-
-
 @router.post("/withdraw", response=ErrorResponseSchema)
 def withdraw(request, data: WithdrawalSchema):
     """
@@ -123,18 +115,3 @@ def logout(request, data: LogoutSchema):
         dict: 로그아웃 결과
     """
     return UserService.logout_user(data)
-
-
-@nomal_router.get("/check-userid/{user_id}", response=CheckUserIdResponseSchema)
-def check_userid_availability(request, user_id: str):
-    """
-    Check if a user ID is available for registration
-
-    Args:
-        request: HTTP request object
-        user_id: User ID to check
-
-    Returns:
-        dict: Response containing availability status and message
-    """
-    return UserService.check_userid_availability(user_id)
