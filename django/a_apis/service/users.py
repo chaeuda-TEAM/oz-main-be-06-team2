@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 
 from a_apis.auth.cookies import create_auth_response
 from a_apis.models.email_verification import EmailVerification
@@ -9,20 +8,12 @@ from a_apis.schema.users import (
     SignupSchema,
     WithdrawalSchema,
 )
-from allauth.account.models import EmailAddress
 from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
-from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.core.validators import validate_email
-from django.db import IntegrityError
 
 User = get_user_model()
 
