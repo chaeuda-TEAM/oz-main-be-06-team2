@@ -1,4 +1,5 @@
 from a_apis.models.email_verification import EmailVerification
+from a_user.models import User
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -9,6 +10,13 @@ class EmailService:
     @staticmethod
     def send_verification_email(email: str) -> dict:
         try:
+            # 유저의 이메일이 이미 인증되었는지 확인
+            if User.objects.filter(email=email, is_email_verified=True).exists():
+                return {
+                    "success": False,
+                    "message": "이미 인증된 이메일입니다.",
+                }
+
             # 기존 미인증 코드 삭제
             EmailVerification.objects.filter(email=email, is_verified=False).delete()
 

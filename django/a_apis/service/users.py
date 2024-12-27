@@ -188,59 +188,6 @@ class UserService:
             }
 
     @staticmethod
-    def find_user_id(username: str, email: str) -> dict:
-        try:
-            user = User.objects.get(username=username, email=email)
-
-            # 이메일 내용 구성
-            subject = "회원님의 아이디를 알려드립니다"
-            message = f"""
-                안녕하세요, {username}님
-                
-                회원님의 아이디는 다음과 같습니다:
-                {user.user_id}
-                
-                로그인 페이지에서 위 아이디로 로그인해주세요.
-            """
-            html_message = f"""
-                <html>
-                    <body>
-                        <h2>회원 아이디 안내</h2>
-                        <p>안녕하세요, {username}님</p>
-                        <p>회원님의 아이디는 다음과 같습니다:</p>
-                        <h3>{user.user_id}</h3>
-                        <p>로그인 페이지에서 위 아이디로 로그인해주세요.</p>
-                    </body>
-                </html>
-            """
-
-            # 이메일 전송
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[email],
-                html_message=html_message,
-                fail_silently=False,
-            )
-
-            return {
-                "success": True,
-                "message": "입력하신 이메일로 아이디를 발송했습니다. 이메일을 확인해주세요.",
-            }
-
-        except User.DoesNotExist:
-            return {
-                "success": False,
-                "message": "입력하신 정보와 일치하는 사용자가 없습니다.",
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "message": f"처리 중 오류가 발생했습니다: {str(e)}",
-            }
-
-    @staticmethod
     def withdraw_user(request, data: WithdrawalSchema):
         try:
             user = request.auth
@@ -293,26 +240,3 @@ class UserService:
                 "success": False,
                 "message": f"로그아웃 처리 중 오류가 발생했습니다: {str(e)}",
             }
-
-    @staticmethod
-    def check_userid_availability(user_id: str) -> dict:
-        """
-        Check if a user ID is available for registration
-
-        Args:
-            user_id: User ID to check
-
-        Returns:
-            dict: Response containing availability status and message
-        """
-        if User.objects.filter(user_id=user_id).exists():
-            return {
-                "success": False,
-                "message": "이미 사용 중인 아이디입니다.",
-                "is_available": False,
-            }
-        return {
-            "success": True,
-            "message": "사용 가능한 아이디입니다.",
-            "is_available": True,
-        }

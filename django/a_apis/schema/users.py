@@ -50,11 +50,6 @@ class TokenResponseSchema(Schema):
     tokens: Optional[TokenSchema] = None
 
 
-class FindUserIdSchema(Schema):
-    username: str
-    email: str
-
-
 class WithdrawalSchema(Schema):
     password: str
 
@@ -66,12 +61,6 @@ class EmailVerificationSchema(Schema):
 
 class LogoutSchema(Schema):
     refresh_token: str
-
-
-class CheckUserIdResponseSchema(Schema):
-    success: bool
-    message: str
-    is_available: bool
 
 
 class ErrorResponseSchema(Schema):
