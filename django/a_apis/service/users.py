@@ -30,7 +30,7 @@ User = get_user_model()
 class UserService:
     @staticmethod
     def login_user(request, data: LoginSchema):
-        user = authenticate(request, username=data.user_id, password=data.password)
+        user = authenticate(request, username=data.email, password=data.password)
         if user:
             login(request, user)
             refresh = RefreshToken.for_user(user)
@@ -44,10 +44,10 @@ class UserService:
                 "user": {
                     "email": user.email,
                     "username": user.username,
-                    "user_id": user.user_id,
+                    "user_id": user.email,
                 },
             }
-        return {"success": False, "message": "아이디 또는 비밀번호가 잘못되었습니다."}
+        return {"success": False, "message": "이메일 또는 비밀번호가 잘못되었습니다."}
 
     @staticmethod
     def refresh_token(refresh_token: str):
@@ -108,7 +108,6 @@ class UserService:
                     "user": {
                         "email": user.email,
                         "username": user.username,
-                        "user_id": user.user_id,
                     },
                 }
         except Exception as e:
@@ -132,7 +131,7 @@ class UserService:
                 raise ValueError("유효하지 않은 이메일 형식입니다.")
 
             # 이메일 중복 검사 수정 - 소프트 딜리트된 계정 제외
-            if User.objects.filter(email=data.email, is_active=False).exists():
+            if User.objects.filter(email=data.email, is_active=True).exists():
                 raise ValueError("이미 사용 중인 이메일입니다.")
 
             # 비밀번호 복잡성 검사
@@ -145,7 +144,9 @@ class UserService:
                 raise ValueError("유효하지 않은 전화번호 형식입니다.")
 
             # 소프트 딜리트된 계정 확인 및 복구
-            deleted_user = User.objects.filter(email=data.email, is_active=True).first()
+            deleted_user = User.objects.filter(
+                email=data.email, is_active=False
+            ).first()
 
             if deleted_user:
                 # 기존 계정 복구
@@ -166,6 +167,9 @@ class UserService:
                 )
             # JWT 토큰 생성
             refresh = RefreshToken.for_user(user)
+
+            # 이메일 인증 데이터 삭제
+            EmailVerification.objects.filter(email=data.email).delete()
 
             return {
                 "success": True,

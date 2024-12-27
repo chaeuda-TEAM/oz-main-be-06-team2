@@ -15,7 +15,7 @@ class SignupSchema(Schema):
 
 
 class LoginSchema(Schema):
-    user_id: str
+    email: str
     password: str
 
 
