@@ -30,7 +30,7 @@ User = get_user_model()
 class UserService:
     @staticmethod
     def login_user(request, data: LoginSchema):
-        user = authenticate(request, username=data.user_id, password=data.password)
+        user = authenticate(request, username=data.email, password=data.password)
         if user:
             login(request, user)
             refresh = RefreshToken.for_user(user)
@@ -44,10 +44,10 @@ class UserService:
                 "user": {
                     "email": user.email,
                     "username": user.username,
-                    "user_id": user.user_id,
+                    "user_id": user.email,
                 },
             }
-        return {"success": False, "message": "아이디 또는 비밀번호가 잘못되었습니다."}
+        return {"success": False, "message": "이메일 또는 비밀번호가 잘못되었습니다."}
 
     @staticmethod
     def refresh_token(refresh_token: str):
