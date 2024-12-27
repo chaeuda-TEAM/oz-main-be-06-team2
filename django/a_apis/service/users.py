@@ -52,20 +52,34 @@ class UserService:
     @staticmethod
     def refresh_token(refresh_token: str):
         try:
-            refresh = RefreshToken(refresh_token)
+            # 기존 토큰 검증
+            token = RefreshToken(refresh_token)
+
+            # 기존 토큰 블랙리스트에 추가
+            token.blacklist()
+
+            # 새로운 토큰 발급
+            user = User.objects.get(id=token["user_id"])
+            new_refresh = RefreshToken.for_user(user)
+
             result = {
                 "success": True,
                 "message": "토큰이 갱신되었습니다.",
                 "tokens": {
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
+                    "access": str(new_refresh.access_token),
+                    "refresh": str(new_refresh),
                 },
             }
             return create_auth_response(
                 result, result["tokens"]["access"], result["tokens"]["refresh"]
             )
-        except TokenError as e:
+        except TokenError:
             return {"success": False, "message": "유효하지 않은 리프레시 토큰입니다."}
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"토큰 갱신 중 오류가 발생했습니다: {str(e)}",
+            }
 
     @staticmethod
     def get_user(request):
@@ -117,10 +131,6 @@ class UserService:
             except ValidationError:
                 raise ValueError("유효하지 않은 이메일 형식입니다.")
 
-            # 사용자 ID 중복 검사
-            if User.objects.filter(user_id=data.user_id).exists():
-                raise ValueError("이미 사용 중인 사용자 ID입니다.")
-
             # 이메일 중복 검사 수정 - 소프트 딜리트된 계정 제외
             if User.objects.filter(email=data.email, is_active=False).exists():
                 raise ValueError("이미 사용 중인 이메일입니다.")
@@ -141,7 +151,6 @@ class UserService:
                 # 기존 계정 복구
                 deleted_user.is_active = True
                 deleted_user.username = data.username
-                deleted_user.user_id = data.user_id
                 deleted_user.phone_number = data.phone_number
                 deleted_user.set_password(data.password)
                 deleted_user.save()
@@ -150,13 +159,11 @@ class UserService:
                 # 새 사용자 생성
                 user = User.objects.create_user(
                     username=data.username,
-                    user_id=data.user_id,
                     email=data.email,
                     password=data.password,
                     phone_number=data.phone_number,
                     is_email_verified=True,
                 )
-
             # JWT 토큰 생성
             refresh = RefreshToken.for_user(user)
 
@@ -170,7 +177,6 @@ class UserService:
                 "user": {
                     "email": user.email,
                     "username": user.username,
-                    "user_id": user.user_id,
                 },
             }
         except ValueError as e:
@@ -179,59 +185,6 @@ class UserService:
             return {
                 "success": False,
                 "message": "회원가입 처리 중 오류가 발생했습니다.",
-            }
-
-    @staticmethod
-    def find_user_id(username: str, email: str) -> dict:
-        try:
-            user = User.objects.get(username=username, email=email)
-
-            # 이메일 내용 구성
-            subject = "회원님의 아이디를 알려드립니다"
-            message = f"""
-                안녕하세요, {username}님
-                
-                회원님의 아이디는 다음과 같습니다:
-                {user.user_id}
-                
-                로그인 페이지에서 위 아이디로 로그인해주세요.
-            """
-            html_message = f"""
-                <html>
-                    <body>
-                        <h2>회원 아이디 안내</h2>
-                        <p>안녕하세요, {username}님</p>
-                        <p>회원님의 아이디는 다음과 같습니다:</p>
-                        <h3>{user.user_id}</h3>
-                        <p>로그인 페이지에서 위 아이디로 로그인해주세요.</p>
-                    </body>
-                </html>
-            """
-
-            # 이메일 전송
-            send_mail(
-                subject=subject,
-                message=message,
-                from_email=settings.EMAIL_HOST_USER,
-                recipient_list=[email],
-                html_message=html_message,
-                fail_silently=False,
-            )
-
-            return {
-                "success": True,
-                "message": "입력하신 이메일로 아이디를 발송했습니다. 이메일을 확인해주세요.",
-            }
-
-        except User.DoesNotExist:
-            return {
-                "success": False,
-                "message": "입력하신 정보와 일치하는 사용자가 없습니다.",
-            }
-        except Exception as e:
-            return {
-                "success": False,
-                "message": f"처리 중 오류가 발생했습니다: {str(e)}",
             }
 
     @staticmethod
@@ -272,14 +225,11 @@ class UserService:
     @staticmethod
     def logout_user(data: LogoutSchema):
         try:
+            # 리프레시 토큰 검증
             token = RefreshToken(data.refresh_token)
-            outstanding_token = OutstandingToken.objects.create(
-                token=str(token),
-                user_id=token["user_id"],
-                jti=token["jti"],
-                expires_at=datetime.fromtimestamp(token["exp"]),
-            )
-            BlacklistedToken.objects.create(token=outstanding_token)
+
+            # 토큰 블랙리스트에 추가
+            token.blacklist()
 
             return {"success": True, "message": "로그아웃 되었습니다."}
 
@@ -290,26 +240,3 @@ class UserService:
                 "success": False,
                 "message": f"로그아웃 처리 중 오류가 발생했습니다: {str(e)}",
             }
-
-    @staticmethod
-    def check_userid_availability(user_id: str) -> dict:
-        """
-        Check if a user ID is available for registration
-
-        Args:
-            user_id: User ID to check
-
-        Returns:
-            dict: Response containing availability status and message
-        """
-        if User.objects.filter(user_id=user_id).exists():
-            return {
-                "success": False,
-                "message": "이미 사용 중인 아이디입니다.",
-                "is_available": False,
-            }
-        return {
-            "success": True,
-            "message": "사용 가능한 아이디입니다.",
-            "is_available": True,
-        }

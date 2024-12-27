@@ -9,7 +9,6 @@ class EmailVerificationRequestSchema(Schema):
 
 class SignupSchema(Schema):
     username: str
-    user_id: str
     password: str
     phone_number: str
     email: str
@@ -32,7 +31,6 @@ class UserSchema(Schema):
 class UserResponseSchema(Schema):
     email: str
     username: str
-    user_id: str
 
 
 class AuthResponseSchema(Schema):
@@ -52,11 +50,6 @@ class TokenResponseSchema(Schema):
     tokens: Optional[TokenSchema] = None
 
 
-class FindUserIdSchema(Schema):
-    username: str
-    email: str
-
-
 class WithdrawalSchema(Schema):
     password: str
 
@@ -68,12 +61,6 @@ class EmailVerificationSchema(Schema):
 
 class LogoutSchema(Schema):
     refresh_token: str
-
-
-class CheckUserIdResponseSchema(Schema):
-    success: bool
-    message: str
-    is_available: bool
 
 
 class ErrorResponseSchema(Schema):
