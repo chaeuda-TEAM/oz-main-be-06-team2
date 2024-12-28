@@ -84,7 +84,6 @@ class GoogleAuthService:
             raise HttpError(400, "Failed to get user info from Google")
 
         user_info = userinfo_resp.json()
-        print(user_info)
         email = user_info.get("email")
         username = user_info.get("name", "")
 
