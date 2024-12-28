@@ -21,7 +21,18 @@ class GoogleAuthService:
             },
         )
 
-        if created or (not user.is_social_login):
+        if created:
+            user.is_active = False
+            user.save()
+
+            # SocialUser 생성
+            SocialUser.objects.create(
+                user=user,
+                social_id=email,
+                social_type="google",  # 'kakao' 또는 'naver'로 변경
+            )
+
+        elif not user.is_social_login:
             user.is_social_login = True
             user.save()
 
@@ -97,7 +108,13 @@ class GoogleAuthService:
             "success": True,
             "message": "Google 로그인 성공",
             "tokens": {"access": str(refresh.access_token), "refresh": str(refresh)},
-            "user": {"email": user.email},
+            "user": {
+                "email": user.email,
+                "username": user.username,
+                "is_active": user.is_active,
+                "is_email_verified": user.is_email_verified,
+                "is_social_login": user.is_social_login,
+            },
             "redirect_url": login_redirect_url,
         }
 
