@@ -9,6 +9,13 @@ jobs:
   migration-check:
     runs-on: ubuntu-latest
 
+    env:
+      DEV_AWS_RDS_NAME: ${{ secrets.DEV_AWS_RDS_NAME }}
+      DEV_AWS_RDS_USER: ${{ secrets.DEV_AWS_RDS_USER }}
+      DEV_AWS_RDS_PASSWORD: ${{ secrets.DEV_AWS_RDS_PASSWORD }}
+      DEV_AWS_RDS_HOST: ${{ secrets.DEV_AWS_RDS_HOST }}
+      DEV_AWS_RDS_PORT: ${{ secrets.DEV_AWS_RDS_PORT }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -36,12 +43,12 @@ jobs:
           cd django
           rm -f */migrations/0*.py
 
-      - name: Make migrations
+      - name: Make migrations with --plan
         run: |
           cd django
-          poetry run python manage.py makemigrations --settings=a_core.settings.development
+          poetry run python manage.py makemigrations --settings=a_core.settings.dev-aws --plan
 
-      - name: Run migrations
+      - name: Run migrations with --plan
         run: |
           cd django
-          poetry run python manage.py migrate --settings=a_core.settings.development
+          poetry run python manage.py migrate --settings=a_core.settings.dev-aws --plan
