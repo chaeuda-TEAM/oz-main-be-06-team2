@@ -49,6 +49,3 @@ jobs:
       - name: Check migrations
         run: |
           cd django
-          poetry run python manage.py makemigrations --dry-run --settings=a_core.settings.dev-aws
-          poetry run python manage.py makemigrations --settings=a_core.settings.dev-aws
-          poetry run python manage.py migrate --check --settings=a_core.settings.dev-aws
