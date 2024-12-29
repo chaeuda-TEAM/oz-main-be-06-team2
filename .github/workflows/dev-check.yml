@@ -49,3 +49,10 @@ jobs:
       - name: Check migrations
         run: |
           cd django
+          poetry run python manage.py makemigrations --settings=a_core.settings.dev-aws
+          poetry run python manage.py migrate --settings=a_core.settings.dev-aws
+
+      - name: Check runserver
+        run: |
+          cd django
+          timeout 5s poetry run python manage.py runserver --settings=a_core.settings.dev-aws || code=$?; if [ $code -eq 124 ]; then exit 0; else exit $code; fi
