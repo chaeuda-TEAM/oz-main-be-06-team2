@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 
 from a_apis.auth.cookies import create_auth_response
 from a_apis.models.email_verification import EmailVerification
@@ -9,20 +8,12 @@ from a_apis.schema.users import (
     SignupSchema,
     WithdrawalSchema,
 )
-from allauth.account.models import EmailAddress
 from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
-from django.conf import settings
 from django.contrib.auth import authenticate, get_user_model, login
 from django.core.exceptions import ValidationError
-from django.core.mail import send_mail
 from django.core.validators import validate_email
-from django.db import IntegrityError
 
 User = get_user_model()
 
@@ -30,24 +21,44 @@ User = get_user_model()
 class UserService:
     @staticmethod
     def login_user(request, data: LoginSchema):
-        user = authenticate(request, username=data.email, password=data.password)
-        if user:
-            login(request, user)
-            refresh = RefreshToken.for_user(user)
+        try:
+            user = User.objects.filter(email=data.email, is_social_login=True).first()
+            if user:
+                social_types = [
+                    su.social_type.upper() for su in user.social_users.all()
+                ]
+                social_types_str = ", ".join(social_types)
+                return {
+                    "success": False,
+                    "message": f"{social_types_str} 로그인 사용자입니다. 소셜 로그인으로 로그인해주세요.",
+                }
+
+            user = authenticate(request, username=data.email, password=data.password)
+            if user:
+                login(request, user)
+                refresh = RefreshToken.for_user(user)
+                return {
+                    "success": True,
+                    "message": "로그인 되었습니다.",
+                    "tokens": {
+                        "access": str(refresh.access_token),
+                        "refresh": str(refresh),
+                    },
+                    "user": {
+                        "email": user.email,
+                        "username": user.username,
+                        "user_id": user.email,
+                    },
+                }
             return {
-                "success": True,
-                "message": "로그인 되었습니다.",
-                "tokens": {
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
-                },
-                "user": {
-                    "email": user.email,
-                    "username": user.username,
-                    "user_id": user.email,
-                },
+                "success": False,
+                "message": "이메일 또는 비밀번호가 잘못되었습니다.",
             }
-        return {"success": False, "message": "이메일 또는 비밀번호가 잘못되었습니다."}
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"로그인 처리 중 오류가 발생했습니다: {str(e)}",
+            }
 
     @staticmethod
     def refresh_token(refresh_token: str):
