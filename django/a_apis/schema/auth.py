@@ -1,12 +1,24 @@
+from typing import Optional
+
 from ninja import Schema
 
 
-class GoogleLoginSchema(Schema):
-    token_id: str
+class TokenSchema(Schema):
+    access: str
+    refresh: str
 
 
-class AuthMessages:
-    GOOGLE_LOGIN_SUCCESS = "Google 로그인 성공"
-    EMAIL_NOT_VERIFIED = "이메일이 인증되지 않았습니다."
-    INVALID_GOOGLE_TOKEN = "유효하지 않은 Google 토큰입니다."
-    SERVER_ERROR = "서버 오류: {}"
+class UserSchema(Schema):
+    email: str
+    username: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_email_verified: Optional[bool] = None
+    is_social_login: Optional[bool] = None
+
+
+class SocialLoginResponseSchema(Schema):
+    success: bool
+    message: str
+    tokens: TokenSchema
+    user: UserSchema
+    redirect_url: str

@@ -30,28 +30,21 @@ class ProductAddress(CommonModel):
 
     class Meta:
         db_table = "product_address"
-        verbose_name = "매물주소"
-        verbose_name_plural = "매물주소"
+        verbose_name = "주소"
 
     def __str__(self):
         return self.add_new
 
-
-class ProductContents(CommonModel):
-    contents_id = models.IntegerField(primary_key=True, verbose_name="이미지/동영상 ID")
-    img_url = models.FileField(upload_to="img/", verbose_name="이미지 URL")
-    video_url = models.FileField(
-        upload_to="video/", verbose_name="동영상 URL", blank=True, null=True
-    )  # 동영상은 필수값 아님
+class ProductVideo(CommonModel):
+    video_id = models.IntegerField(primary_key=True, verbose_name="동영상 ID")
+    video_url = models.FileField(upload_to="video/", null=True, blank=True, verbose_name="동영상 URL")
 
     class Meta:
-        db_table = "product_contents"
-        verbose_name = "이미지/동영상"
-        verbose_name_plural = "이미지/동영상"
+        db_table = "product_video"
+        verbose_name = "동영상"
 
     def __str__(self):
-        return self.img_url.url
-
+        return self.video_url.url
 
 class ProductDetail(CommonModel):
     HEAT_CHOICES = [
@@ -81,7 +74,7 @@ class ProductDetail(CommonModel):
     pro_type = models.CharField(
         max_length=10, choices=TYPE_CHOICES, verbose_name="건물유형"
     )
-    pro_floor = models.IntegerField(verbose_name="층")
+    pro_floor = models.CharField(max_length=10,verbose_name="층")
     pro_intro = models.TextField(verbose_name="상세설명")
     sale = models.BooleanField(default=True, verbose_name="판매여부")
     cost_id = models.ForeignKey(
@@ -90,14 +83,24 @@ class ProductDetail(CommonModel):
     address_id = models.ForeignKey(
         ProductAddress, on_delete=models.CASCADE, verbose_name="주소 ID"
     )
-    contents = models.ForeignKey(
-        ProductContents, on_delete=models.CASCADE, verbose_name="내용 ID"
-    )
+    video_id = models.ForeignKey(ProductVideo, on_delete=models.CASCADE, verbose_name="동영상 ID")
 
     class Meta:
-        db_table = "product_detail"
+        db_table = "products"
         verbose_name = "매물정보"
         verbose_name_plural = "매물정보목록"
 
     def __str__(self):
         return self.pro_title
+
+class ProductImg(CommonModel):
+    img_id = models.IntegerField(primary_key=True, verbose_name="이미지 ID")
+    img_url = models.FileField(upload_to="img/", verbose_name="이미지 URL")
+    product_id = models.ForeignKey(ProductDetail, on_delete=models.CASCADE,verbose_name="상품 ID")
+
+    class Meta:
+        db_table = "product_img"
+        verbose_name = "이미지"
+
+    def __str__(self):
+        return self.img_url.url

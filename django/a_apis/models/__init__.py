@@ -1,4 +1,4 @@
 from .email_verification import EmailVerification
-from .products import ProductAddress, ProductContents, ProductDetail
+from .products import ProductAddress, ProductDetail, ProductImg, ProductVideo
 
-__all__ = ["EmailVerification", "ProductDetail", "ProductAddress", "ProductContents"]
+__all__ = ["EmailVerification", "ProductDetail", "ProductAddress", "ProductImg", "ProductVideo"]

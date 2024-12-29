@@ -1,9 +1,8 @@
 import requests
-from a_apis.auth.cookies import create_auth_response
+from a_user.models import SocialUser
 from ninja.errors import HttpError
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 
@@ -14,12 +13,35 @@ class GoogleAuthService:
     @staticmethod
     def create_or_get_user(email: str, username: str) -> User:
         user, created = User.objects.get_or_create(
-            email=email, defaults={"username": email, "is_email_verified": True}
+            email=email,
+            defaults={
+                "username": username,
+                "is_email_verified": True,
+                "is_social_login": True,
+            },
         )
 
         if created:
-            user.username = username
+            user.is_active = False
             user.save()
+
+            # SocialUser 생성
+            SocialUser.objects.create(
+                user=user,
+                social_id=email,
+                social_type="google",  # 'kakao' 또는 'naver'로 변경
+            )
+
+        elif not user.is_social_login:
+            user.is_social_login = True
+            user.save()
+
+            # SocialUser 생성
+            SocialUser.objects.create(
+                user=user,
+                social_id=email,
+                social_type="google",  # 'kakao' 또는 'naver'로 변경
+            )
 
         return user
 
@@ -73,7 +95,6 @@ class GoogleAuthService:
             raise HttpError(400, "Failed to get user info from Google")
 
         user_info = userinfo_resp.json()
-        print(user_info)
         email = user_info.get("email")
         username = user_info.get("name", "")
 
@@ -87,7 +108,13 @@ class GoogleAuthService:
             "success": True,
             "message": "Google 로그인 성공",
             "tokens": {"access": str(refresh.access_token), "refresh": str(refresh)},
-            "user": {"email": user.email},
+            "user": {
+                "email": user.email,
+                "username": user.username,
+                "is_active": user.is_active,
+                "is_email_verified": user.is_email_verified,
+                "is_social_login": user.is_social_login,
+            },
             "redirect_url": login_redirect_url,
         }
 
@@ -237,7 +264,7 @@ class NaverAuthService:
 
         user_info_resp = requests.get(user_info_url, headers=headers)
         if user_info_resp.status_code != 200:
-            raise HttpError(400, "네이버에서 사용자 정보를 가져오는데 실패했습니다")
+            raise HttpError(400, "네이버에서 사용자 정보를 가져오는데 실패했습��다")
 
         user_info = user_info_resp.json()
         response = user_info.get("response")

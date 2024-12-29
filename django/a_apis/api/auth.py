@@ -1,5 +1,6 @@
 from typing import Dict
 
+from a_apis.schema.auth import SocialLoginResponseSchema
 from a_apis.service.auth import GoogleAuthService, KakaoAuthService, NaverAuthService
 from ninja import Router
 
@@ -17,16 +18,15 @@ def google_auth_start_local(request):
     return redirect(auth_url)
 
 
-@router.get("/google/callback/dev", response=Dict)
+@router.get("/google/callback/dev", response=SocialLoginResponseSchema)
 def google_auth_callback_local(request, code: str = None):
-    response_data = GoogleAuthService.callback_google_auth(
+    return GoogleAuthService.callback_google_auth(
         code=code,
         server_base_url=settings.SERVER_BASE_URL_DEV,
         client_id=settings.AUTH_GOOGLE_CLIENT_ID,
         client_secret=settings.AUTH_GOOGLE_CLIENT_SECRET,
         login_redirect_url=settings.LOGIN_REDIRECT_URL_DEV,
     )
-    return response_data
 
 
 @router.get("/google/login")
@@ -37,7 +37,7 @@ def google_auth_start(request):
     return redirect(auth_url)
 
 
-@router.get("/google/callback", response=Dict)
+@router.get("/google/callback", response=SocialLoginResponseSchema)
 def google_auth_callback(request, code: str = None):
     return GoogleAuthService.callback_google_auth(
         code=code,
