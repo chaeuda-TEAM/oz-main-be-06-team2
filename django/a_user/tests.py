@@ -41,7 +41,6 @@ class UserAPITest(TestCase):
             verification_code="123456",
         )
 
-
     def create_user_and_get_tokens(self):
         """사용자 생성 및 토큰 반환 헬퍼 메서드"""
         response = self.client.post(
