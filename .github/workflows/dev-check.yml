@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - dev
+  pull_request:
+    branches:
+      - dev
 
 jobs:
   migration-check:
@@ -43,12 +46,9 @@ jobs:
           cd django
           rm -f */migrations/0*.py
 
-      - name: Make migrations with --plan
+      - name: Check migrations
         run: |
           cd django
-          poetry run python manage.py makemigrations --settings=a_core.settings.dev-aws --plan
-
-      - name: Run migrations with --plan
-        run: |
-          cd django
-          poetry run python manage.py migrate --settings=a_core.settings.dev-aws --plan
+          poetry run python manage.py makemigrations --dry-run --settings=a_core.settings.dev-aws
+          poetry run python manage.py makemigrations --settings=a_core.settings.dev-aws
+          poetry run python manage.py migrate --check --settings=a_core.settings.dev-aws
