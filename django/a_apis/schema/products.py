@@ -66,3 +66,4 @@ class ProductAllResponseSchema(Schema):
     video: Optional[str] = None
     detail: ProductDetailSchema
     address: AddressSchema
+

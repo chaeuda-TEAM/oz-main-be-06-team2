@@ -26,11 +26,13 @@ class ProductImgAdmin(admin.ModelAdmin):
     search_fields = ("id", "img_url")
 
 
+
 # ProductVideo 관리자 클래스
 @admin.register(ProductVideo)
 class ProductVideoAdmin(admin.ModelAdmin):
     list_display = ("id", "video_url")
     search_fields = ("id", "video_url")
+
 
 
 # ProductDetail 관리자 클래스

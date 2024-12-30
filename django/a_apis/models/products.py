@@ -102,7 +102,7 @@ class ProductImg(CommonModel):
         on_delete=models.CASCADE,
         verbose_name="상품 ID",
         related_name="product_images",
-    )
+
 
     class Meta:
         db_table = "product_img"
