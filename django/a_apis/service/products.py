@@ -31,6 +31,7 @@ from django.http import JsonResponse
 load_dotenv()
 
 
+# 부동산 매물등록 관련
 class ProductService:
     @staticmethod
     def create_product(
@@ -54,6 +55,11 @@ class ProductService:
                 mg_cost=data.cost.mg_cost,
             )
 
+            # ProductVideo 객체 생성
+            product_video = None
+            if video:
+                product_video = ProductVideo.objects.create(video_url=video)
+
             # ProductDetail 객체 생성
             product_detail = ProductDetail.objects.create(
                 user=user,
@@ -65,33 +71,18 @@ class ProductService:
                 pro_type=data.detail.pro_type,
                 address=product_address,  # 주소 필드 설정
                 cost=cost,  # 비용 필드 설정
+                video=product_video,  # 동영상 필드 설정
             )
 
-            # 이미지 데이터를 S3에 업로드하고 URL을 DB에 저장
             if len(images) > 15:
                 raise ValueError("최대 15장의 이미지만 업로드할 수 있습니다.")
 
             for image in images:
                 ProductImg.objects.create(product_detail=product_detail, img_url=image)
 
-            # 동영상 데이터를 S3에 업로드하고 URL을 DB에 저장
-            if video:
-                ProductVideo.objects.create(
-                    product_detail=product_detail, video_url=video
-                )
-
             response_data = {
-                "images": [
-                    img.img_url
-                    for img in ProductImg.objects.filter(product_detail=product_detail)
-                ],
-                "video": (
-                    ProductVideo.objects.filter(product_detail=product_detail)
-                    .first()
-                    .video_url
-                    if video
-                    else None
-                ),
+                "images": [default_storage.url(image.name) for image in images],
+                "video": default_storage.url(video.name) if video else None,
                 "detail": {
                     "pro_title": product_detail.pro_title,
                     "pro_price": product_detail.pro_price,
@@ -116,7 +107,13 @@ class ProductService:
             }
 
             return ProductAllResponseSchema(
-                success=True, message="성공적으로 생성되었습니다.", data=response_data
+                success=True,
+                message="성공적으로 생성되었습니다.",
+                images=response_data["images"],
+                video=response_data["video"],
+                detail=response_data["detail"],
+                cost=response_data["cost"],
+                address=response_data["address"],
             )
 
         except Exception as e:
