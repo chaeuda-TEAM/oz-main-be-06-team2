@@ -1,6 +1,5 @@
 from a_apis.models.email_verification import EmailVerification
 from a_apis.models.products import (
-    Cost,
     ProductAddress,
     ProductDetail,
     ProductImg,
@@ -11,13 +10,6 @@ from django.contrib import admin
 
 # EmailVerification 모델 등록
 admin.site.register(EmailVerification)
-
-
-# Cost 관리자 클래스
-@admin.register(Cost)
-class CostAdmin(admin.ModelAdmin):
-    list_display = ("id", "cost_type", "mg_cost")
-    search_fields = ("cost_type",)
 
 
 # ProductAddress 관리자 클래스

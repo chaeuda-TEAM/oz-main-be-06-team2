@@ -4,14 +4,12 @@ from typing import Optional
 import boto3
 import requests
 from a_apis.models.products import (
-    Cost,
     ProductAddress,
     ProductDetail,
     ProductImg,
     ProductVideo,
 )
 from a_apis.schema.products import (
-    CostSchema,
     ImageSchema,
     ProductAllResponseSchema,
     ProductAllSchema,
@@ -40,6 +38,9 @@ class ProductService:
         images: list[UploadedFile],
         video: Optional[UploadedFile],
     ):
+        if not user.is_authenticated:
+            raise HttpError(401, "로그인이 필요합니다.")
+
         try:
             # ProductAddress 객체 생성
             product_address = ProductAddress.objects.create(
@@ -47,12 +48,6 @@ class ProductService:
                 add_old=data.address.add_old,
                 latitude=data.address.latitude,
                 longitude=data.address.longitude,
-            )
-
-            # Cost 객체 생성
-            cost = Cost.objects.create(
-                cost_type=data.cost.cost_type,
-                mg_cost=data.cost.mg_cost,
             )
 
             # ProductVideo 객체 생성
@@ -65,12 +60,15 @@ class ProductService:
                 user=user,
                 pro_title=data.detail.pro_title,
                 pro_price=data.detail.pro_price,
+                management_cost=data.detail.management_cost,
+                pro_floor=data.detail.pro_floor,
+                description=data.detail.description,
+                sale=data.detail.sale,
                 pro_supply_a=data.detail.pro_supply_a,
                 pro_site_a=data.detail.pro_site_a,
                 pro_heat=data.detail.pro_heat,
                 pro_type=data.detail.pro_type,
                 address=product_address,  # 주소 필드 설정
-                cost=cost,  # 비용 필드 설정
                 video=product_video,  # 동영상 필드 설정
             )
 
@@ -86,17 +84,14 @@ class ProductService:
                 "detail": {
                     "pro_title": product_detail.pro_title,
                     "pro_price": product_detail.pro_price,
+                    "management_cost": product_detail.management_cost,
                     "pro_supply_a": product_detail.pro_supply_a,
                     "pro_site_a": product_detail.pro_site_a,
                     "pro_heat": product_detail.pro_heat,
                     "pro_type": product_detail.pro_type,
                     "pro_floor": product_detail.pro_floor,
-                    "pro_intro": product_detail.pro_intro,
+                    "description": product_detail.description,
                     "sale": product_detail.sale,
-                },
-                "cost": {
-                    "cost_type": product_detail.cost.cost_type,
-                    "mg_cost": product_detail.cost.mg_cost,
                 },
                 "address": {
                     "add_new": product_detail.address.add_new,
@@ -112,7 +107,6 @@ class ProductService:
                 images=response_data["images"],
                 video=response_data["video"],
                 detail=response_data["detail"],
-                cost=response_data["cost"],
                 address=response_data["address"],
             )
 

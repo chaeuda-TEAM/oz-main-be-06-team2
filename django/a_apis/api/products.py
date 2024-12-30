@@ -1,7 +1,6 @@
 from typing import Optional
 
 from a_apis.schema.products import (
-    CostSchema,
     ProductAllResponseSchema,
     ProductAllSchema,
     ProductDetailSchema,
