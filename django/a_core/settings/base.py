@@ -22,6 +22,12 @@ if not os.path.exists(env_path):
         env_file.write("AUTH_GOOGLE_CLIENT_ID=\n")
         env_file.write("AUTH_GOOGLE_CLIENT_SECRET=\n")
         env_file.write("\n")
+        env_file.write("AUTH_KAKAO_CLIENT_ID=\n")
+        env_file.write("AUTH_KAKAO_CLIENT_SECRET=\n")
+        env_file.write("\n")
+        env_file.write("AUTH_NAVER_CLIENT_ID=\n")
+        env_file.write("AUTH_NAVER_CLIENT_SECRET=\n")
+        env_file.write("\n")
         env_file.write("SERVER_BASE_URL=https://api.chaeuda.shop\n")
         env_file.write("SERVER_BASE_URL_DEV=http://127.0.0.1:5174\n")
 
@@ -33,6 +39,9 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 AUTH_GOOGLE_CLIENT_ID = os.getenv("AUTH_GOOGLE_CLIENT_ID")
 AUTH_GOOGLE_CLIENT_SECRET = os.getenv("AUTH_GOOGLE_CLIENT_SECRET")
 AUTH_KAKAO_CLIENT_ID = os.getenv("AUTH_KAKAO_CLIENT_ID")
+AUTH_KAKAO_CLIENT_SECRET = os.getenv("AUTH_KAKAO_CLIENT_SECRET")
+AUTH_NAVER_CLIENT_ID = os.getenv("AUTH_NAVER_CLIENT_ID")
+AUTH_NAVER_CLIENT_SECRET = os.getenv("AUTH_NAVER_CLIENT_SECRET")
 
 
 # Application definition

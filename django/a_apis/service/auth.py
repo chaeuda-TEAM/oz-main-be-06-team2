@@ -29,7 +29,7 @@ class GoogleAuthService:
             SocialUser.objects.create(
                 user=user,
                 social_id=email,
-                social_type="google",  # 'kakao' 또는 'naver'로 변경
+                social_type="google",
             )
 
         elif not user.is_social_login:
@@ -40,7 +40,7 @@ class GoogleAuthService:
             SocialUser.objects.create(
                 user=user,
                 social_id=email,
-                social_type="google",  # 'kakao' 또는 'naver'로 변경
+                social_type="google",
             )
 
         return user
@@ -123,12 +123,35 @@ class KakaoAuthService:
     @staticmethod
     def create_or_get_user(email: str, username: str) -> User:
         user, created = User.objects.get_or_create(
-            email=email, defaults={"username": username, "is_email_verified": True}
+            email=email,
+            defaults={
+                "username": username,
+                "is_email_verified": True,
+                "is_social_login": True,
+            },
         )
 
         if created:
-            user.username = username
+            user.is_active = False
             user.save()
+
+            # SocialUser 생성
+            SocialUser.objects.create(
+                user=user,
+                social_id=email,
+                social_type="kakao",
+            )
+
+        elif not user.is_social_login:
+            user.is_social_login = True
+            user.save()
+
+            # SocialUser 생성
+            SocialUser.objects.create(
+                user=user,
+                social_id=email,
+                social_type="kakao",
+            )
 
         return user
 
@@ -190,7 +213,7 @@ class KakaoAuthService:
         if not email:
             raise HttpError(400, "이메일 정보가 없습니다")
 
-        username = kakao_account.get("profile", {}).get("username", "")
+        username = kakao_account.get("profile", {}).get("nickname", "")
 
         user = KakaoAuthService.create_or_get_user(email=email, username=username)
         refresh = RefreshToken.for_user(user)
@@ -199,7 +222,13 @@ class KakaoAuthService:
             "success": True,
             "message": "카카오 로그인 성공",
             "tokens": {"access": str(refresh.access_token), "refresh": str(refresh)},
-            "user": {"email": user.email},
+            "user": {
+                "email": user.email,
+                "username": user.username,
+                "is_active": user.is_active,
+                "is_email_verified": user.is_email_verified,
+                "is_social_login": user.is_social_login,
+            },
             "redirect_url": login_redirect_url,
         }
 
@@ -208,24 +237,48 @@ class NaverAuthService:
     @staticmethod
     def create_or_get_user(email: str, username: str) -> User:
         user, created = User.objects.get_or_create(
-            email=email, defaults={"username": username, "is_email_verified": True}
+            email=email,
+            defaults={
+                "username": username,
+                "is_email_verified": True,
+                "is_social_login": True,
+            },
         )
 
         if created:
-            user.username = username
+            user.is_active = False
             user.save()
+
+            # SocialUser 생성
+            SocialUser.objects.create(
+                user=user,
+                social_id=email,
+                social_type="naver",
+            )
+
+        elif not user.is_social_login:
+            user.is_social_login = True
+            user.save()
+
+            # SocialUser 생성
+            SocialUser.objects.create(
+                user=user,
+                social_id=email,
+                social_type="naver",
+            )
 
         return user
 
     @staticmethod
     def start_naver_auth(server_base_url: str, client_id: str) -> str:
         redirect_uri = f"{server_base_url}/auth/naver/callback"
+        state = "NAVER_LOGIN_STATE"  # 고정된 state 값 사용
         return (
             "https://nid.naver.com/oauth2.0/authorize"
             f"?client_id={client_id}"
             f"&redirect_uri={redirect_uri}"
             "&response_type=code"
-            "&state=RANDOM_STATE"  # 보안을 위한 상태 토큰
+            f"&state={state}"
         )
 
     @staticmethod
@@ -245,6 +298,7 @@ class NaverAuthService:
             "client_id": client_id,
             "client_secret": client_secret,
             "code": code,
+            "state": "NAVER_LOGIN_STATE",
             "redirect_uri": f"{server_base_url}/auth/naver/callback",
         }
 
@@ -264,7 +318,7 @@ class NaverAuthService:
 
         user_info_resp = requests.get(user_info_url, headers=headers)
         if user_info_resp.status_code != 200:
-            raise HttpError(400, "네이버에서 사용자 정보를 가져오는데 실패했습��다")
+            raise HttpError(400, "네이버에서 사용자 정보를 가져오는데 실패했습니다")
 
         user_info = user_info_resp.json()
         response = user_info.get("response")
@@ -275,7 +329,7 @@ class NaverAuthService:
         if not email:
             raise HttpError(400, "이메일 정보가 없습니다")
 
-        username = response.get("username", "")
+        username = response.get("name", "")
 
         user = NaverAuthService.create_or_get_user(email=email, username=username)
         refresh = RefreshToken.for_user(user)
@@ -284,6 +338,12 @@ class NaverAuthService:
             "success": True,
             "message": "네이버 로그인 성공",
             "tokens": {"access": str(refresh.access_token), "refresh": str(refresh)},
-            "user": {"email": user.email},
+            "user": {
+                "email": user.email,
+                "username": user.username,
+                "is_active": user.is_active,
+                "is_email_verified": user.is_email_verified,
+                "is_social_login": user.is_social_login,
+            },
             "redirect_url": login_redirect_url,
         }

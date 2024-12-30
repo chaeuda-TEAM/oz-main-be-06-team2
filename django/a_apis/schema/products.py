@@ -35,6 +35,7 @@ class ProductSchema(Schema):
     pro_intro: str
     sale: bool
 
+
 class Cost(Schema):
     cost_type: str
     mg_cost: int
