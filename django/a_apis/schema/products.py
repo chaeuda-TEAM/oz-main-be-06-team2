@@ -1,15 +1,15 @@
 from enum import Enum
 from typing import Optional
 
-from ninja import Schema
+from ninja import Field, Schema
 from ninja.files import UploadedFile
 
 
 class AddressSchema(Schema):
-    add_new: str
-    add_old: str
-    latitude: float
-    longitude: float
+    add_new: str = Field(..., description="도로명주소")
+    add_old: str = Field(..., description="구주소")
+    latitude: float = Field(..., description="위도")
+    longitude: float = Field(..., description="경도")
 
 
 class AddressResponseSchema(Schema):
@@ -32,16 +32,16 @@ class BuildingType(str, Enum):
 
 
 class ProductDetailSchema(Schema):
-    pro_title: str
-    pro_price: int
-    management_cost: int
-    pro_supply_a: float
-    pro_site_a: float
-    pro_heat: HeatType
-    pro_type: BuildingType
-    pro_floor: int
-    description: str
-    sale: bool
+    pro_title: str = Field(..., description="제목")
+    pro_price: int = Field(..., description="매물금액")
+    management_cost: int = Field(..., description="관리비")
+    pro_supply_a: float = Field(..., description="공급면적(평수)")
+    pro_site_a: float = Field(..., description="부지면적")
+    pro_heat: HeatType = Field(..., description="난방방식")
+    pro_type: BuildingType = Field(..., description="건물유형")
+    pro_floor: int = Field(..., description="층")
+    description: str = Field(..., description="상세설명")
+    sale: bool = Field(..., description="판매여부")
 
 
 class ImageSchema(Schema):
