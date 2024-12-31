@@ -1,5 +1,6 @@
 from typing import Optional
 
+from a_apis.models import ProductDetail
 from a_apis.schema.products import (
     ProductAllResponseSchema,
     ProductAllSchema,
@@ -46,3 +47,14 @@ def create_product(
         return JsonResponse(
             {"success": False, "message": "서버 오류가 발생했습니다."}, status=500
         )
+
+
+@router.get("/EUM-CHECK", response=dict)
+def eum_check(request):
+    """
+    EUM 초이스필드 프론트분들 확인용
+    """
+    return {
+        "heat_choices": dict(ProductDetail.HEAT_CHOICES),
+        "type_choices": dict(ProductDetail.TYPE_CHOICES),
+    }
