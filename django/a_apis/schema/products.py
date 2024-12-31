@@ -41,7 +41,7 @@ class ProductDetailSchema(Schema):
     pro_type: BuildingType = Field(..., description="건물유형")
     pro_floor: int = Field(..., description="층")
     description: str = Field(..., description="상세설명")
-    sale: bool = Field(..., description="판매여부")
+    sale: bool = Field(default=True, description="판매여부")
 
 
 class ImageSchema(Schema):

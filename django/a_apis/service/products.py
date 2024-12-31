@@ -72,8 +72,8 @@ class ProductService:
                 video=product_video,  # 동영상 필드 설정
             )
 
-            if len(images) > 15:
-                raise ValueError("최대 15장의 이미지만 업로드할 수 있습니다.")
+            if len(images) > 10:
+                raise ValueError("최대 10장의 이미지만 업로드할 수 있습니다.")
 
             for image in images:
                 ProductImg.objects.create(product_detail=product_detail, img_url=image)
@@ -110,5 +110,7 @@ class ProductService:
                 address=response_data["address"],
             )
 
+        except ValueError as e:
+            raise HttpError(400, f"잘못된 요청: {str(e)}")
         except Exception as e:
             raise HttpError(500, f"데이터 저장 중 오류가 발생했습니다: {str(e)}")

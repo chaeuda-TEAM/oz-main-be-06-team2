@@ -1,5 +1,7 @@
 from typing import Optional
 
+from a_apis.auth.bearer import AuthBearer
+from a_apis.models import ProductDetail
 from a_apis.schema.products import (
     ProductAllResponseSchema,
     ProductAllSchema,
@@ -11,10 +13,10 @@ from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from ninja.security import django_auth
 
-from a_apis.models import ProductDetail
 from django.contrib.auth.decorators import login_required
 
-router = Router()
+public_router = Router()
+router = Router(auth=AuthBearer())
 
 
 @router.post("/create", response=ProductAllResponseSchema)
@@ -49,7 +51,7 @@ def create_product(
         )
 
 
-@router.get("/EUM-CHECK", response=dict)
+@public_router.get("/EUM-CHECK", response=dict)
 def eum_check(request):
     """
     EUM 초이스필드 프론트분들 확인용
