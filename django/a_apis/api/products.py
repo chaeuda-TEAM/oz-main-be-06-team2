@@ -1,27 +1,48 @@
-from a_apis.schema.products import AddressResponseSchema, AddressSchema
-from a_apis.service.products import AddressService
-from ninja import Router
+from typing import Optional
+
+from a_apis.schema.products import (
+    ProductAllResponseSchema,
+    ProductAllSchema,
+    ProductDetailSchema,
+)
+from a_apis.service.products import ProductService
+from ninja import File, Router
 from ninja.errors import HttpError
+from ninja.files import UploadedFile
 from ninja.security import django_auth
+
+from django.contrib.auth.decorators import login_required
 
 router = Router()
 
 
-@router.post("/save-product-address", response=AddressResponseSchema)
-def save_product_address(request, data: AddressSchema):
+@router.post("/create", response=ProductAllResponseSchema)
+@login_required
+def create_product(
+    request,
+    data: ProductAllSchema,
+    images: list[UploadedFile] = File(...),
+    video: Optional[UploadedFile] = File(None),
+):
     """
-    매물 주소 저장 엔드포인트
+    매물 등록 API
 
     Args:
-        request: HTTP 요청 객체
-        data: 주소 요청 데이터 (AddressSchema)
+        request: Django 요청 객체
+        data (ProductAllSchema): 생성할 매물의 데이터
+        images (list[UploadedFile]): 업로드할 이미지 파일 목록
+        video (Optional[UploadedFile]): 업로드할 동영상 파일 (없을 수도 있음)
 
     Returns:
-        dict: 주소 생성 결과
+        ProductAllResponseSchema: 생성된 매물 응답 데이터
     """
-    user = request.user  # 로그인된 유저 정보를 가져옴
-    if not user.is_authenticated:
-        raise HttpError(401, "로그인이 필요합니다.")
-
-    result = AddressService.save_product_address(user, data)
-    return result
+    try:
+        user = request.user
+        response_data = ProductService.create_product(user, data, images, video)
+        return response_data
+    except HttpError as e:
+        return JsonResponse({"success": False, "message": str(e)}, status=e.status_code)
+    except Exception as e:
+        return JsonResponse(
+            {"success": False, "message": "서버 오류가 발생했습니다."}, status=500
+        )
