@@ -51,8 +51,8 @@ class ProductDetail(CommonModel):
         ("type_etc", "기타"),
     ]
     id = models.BigAutoField(primary_key=True, verbose_name="매물 ID")
-    user_no = models.ForeignKey(
-        User, on_delete=models.CASCADE, verbose_name="유저 ID", db_column="user_no"
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, verbose_name="유저 ID", db_column="user"
     )
     pro_title = models.CharField(max_length=50, verbose_name="제목")
     pro_price = models.IntegerField(verbose_name="매물금액")
@@ -96,7 +96,7 @@ class ProductDetail(CommonModel):
         return self.pro_title
 
     def get_user_info(self):
-        return f"{self.user_no.email}"  # 또는 원하는 사용자 정보 표시 형식
+        return f"{self.user.email}"  # 또는 원하는 사용자 정보 표시 형식
 
     get_user_info.short_description = "사용자"  # admin에서 보여질 컬럼명
 
