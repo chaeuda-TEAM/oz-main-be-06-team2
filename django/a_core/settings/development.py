@@ -33,7 +33,7 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 3 * 1024 * 1024  # 3MB limit
-
+DATA_UPLOAD_MAX_MEMORY_SIZE = 3 * 1024 * 1024  # 3MB limit
 # Shell Plus 설정
 SHELL_PLUS = "ipython"
 SHELL_PLUS_PRINT_SQL = True
