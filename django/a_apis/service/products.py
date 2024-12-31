@@ -1,72 +1,114 @@
 import os
+from typing import Optional
 
+import boto3
 import requests
-from a_apis.models.products import ProductAddress, ProductDetail
-from a_apis.schema.products import AddressSchema
+from a_apis.models.products import (
+    ProductAddress,
+    ProductDetail,
+    ProductImg,
+    ProductVideo,
+)
+from a_apis.schema.products import (
+    ImageSchema,
+    ProductAllResponseSchema,
+    ProductAllSchema,
+    ProductDetailSchema,
+    VideoSchema,
+)
 from dotenv import load_dotenv
 from ninja.errors import HttpError
 
+from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
+from django.core.files.uploadedfile import UploadedFile
 from django.http import JsonResponse
 
-# load_dotenv()
-
-# class MapService:
-#     @staticmethod
-#     def create_product_address(payload: AddressRequestSchema) -> JsonResponse:
-#         address = payload.add_new
-#         naver_api_url = "https://naveropenapi.apigw.ntruss.com/map-geocode/v2/geocode"
-#         headers = {
-#             "X-NCP-APIGW-API-KEY-ID": os.getenv("NAVER_API_KEY_ID"),
-#             "X-NCP-APIGW-API-KEY": os.getenv("NAVER_API_KEY")
-#         }
-#         params = {"query": address}
-#         response = requests.get(naver_api_url, headers=headers, params=params)
-#         if response.status_code == 200:
-#             data = response.json()
-#             if data['addresses']:
-#                 location = data['addresses'][0]
-#                 product_address = ProductAddress(
-#                     add_new=payload.add_new,
-#                     add_old=payload.add_old,
-#                     latitude=location['y'],
-#                     longitude=location['x']
-#                 )
-#                 product_address.save()
-#                 return JsonResponse({'latitude': location['y'], 'longitude': location['x']}, status=201)
-#             return JsonResponse({"error": "No location found"}, status=404)
-#         return JsonResponse({"error": "Naver API error"}, status=500)
+load_dotenv()
 
 
-class AddressService:
+# 부동산 매물등록 관련
+class ProductService:
     @staticmethod
-    def save_product_address(user: User, data: AddressSchema) -> dict:
+    def create_product(
+        user: User,
+        data: ProductAllSchema,
+        images: list[UploadedFile],
+        video: Optional[UploadedFile],
+    ):
+        if not user.is_authenticated:
+            raise HttpError(401, "로그인이 필요합니다.")
+
         try:
-            # 주소 데이터를 DB에 저장
-            address = ProductAddress.objects.create(
-                add_new=data.add_new,
-                add_old=data.add_old,
-                latitude=data.latitude,
-                longitude=data.longitude,
+            # ProductAddress 객체 생성
+            product_address = ProductAddress.objects.create(
+                add_new=data.address.add_new,
+                add_old=data.address.add_old,
+                latitude=data.address.latitude,
+                longitude=data.address.longitude,
             )
 
-            # ProductDetail에 주소 연결
-            ProductDetail.objects.create(
-                user_no=user,  # 로그인된 유저 정보
-                address_id=address,
-                # 다른 필드들은 필요에 따라 추가하면 됨
+            # ProductVideo 객체 생성
+            product_video = None
+            if video:
+                product_video = ProductVideo.objects.create(video_url=video)
+
+            # ProductDetail 객체 생성
+            product_detail = ProductDetail.objects.create(
+                user=user,
+                pro_title=data.detail.pro_title,
+                pro_price=data.detail.pro_price,
+                management_cost=data.detail.management_cost,
+                pro_floor=data.detail.pro_floor,
+                description=data.detail.description,
+                sale=data.detail.sale,
+                pro_supply_a=data.detail.pro_supply_a,
+                pro_site_a=data.detail.pro_site_a,
+                pro_heat=data.detail.pro_heat,
+                pro_type=data.detail.pro_type,
+                address=product_address,  # 주소 필드 설정
+                video=product_video,  # 동영상 필드 설정
             )
 
-            return {
-                "success": True,
-                "message": "주소 및 위도경도 저장 완료",
-                "data": {
-                    "user": user.username,
-                    "add_new": data.add_new,
-                    "add_old": data.add_old,
-                    "latitude": data.latitude,
-                    "longitude": data.longitude,
+            if len(images) > 15:
+                raise ValueError("최대 15장의 이미지만 업로드할 수 있습니다.")
+
+            for image in images:
+                ProductImg.objects.create(product_detail=product_detail, img_url=image)
+
+            response_data = {
+                "images": [default_storage.url(image.name) for image in images],
+                "video": default_storage.url(video.name) if video else None,
+                "detail": {
+                    "pro_title": product_detail.pro_title,
+                    "pro_price": product_detail.pro_price,
+                    "management_cost": product_detail.management_cost,
+                    "pro_supply_a": product_detail.pro_supply_a,
+                    "pro_site_a": product_detail.pro_site_a,
+                    "pro_heat": product_detail.pro_heat,
+                    "pro_type": product_detail.pro_type,
+                    "pro_floor": product_detail.pro_floor,
+                    "description": product_detail.description,
+                    "sale": product_detail.sale,
+                },
+                "address": {
+                    "add_new": product_detail.address.add_new,
+                    "add_old": product_detail.address.add_old,
+                    "latitude": product_detail.address.latitude,
+                    "longitude": product_detail.address.longitude,
                 },
             }
+
+            return ProductAllResponseSchema(
+                success=True,
+                message="성공적으로 생성되었습니다.",
+                images=response_data["images"],
+                video=response_data["video"],
+                detail=response_data["detail"],
+                address=response_data["address"],
+            )
+
         except Exception as e:
             raise HttpError(500, f"데이터 저장 중 오류가 발생했습니다: {str(e)}")
