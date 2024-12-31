@@ -1,4 +1,5 @@
 import requests
+from a_apis.models.email_verification import EmailVerification
 from a_user.models import SocialUser
 from ninja.errors import HttpError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -9,9 +10,9 @@ from django.contrib.auth.models import User
 User = get_user_model()
 
 
-class GoogleAuthService:
+class SocialLoginService:
     @staticmethod
-    def create_or_get_user(email: str, username: str) -> User:
+    def create_or_get_user(email: str, username: str, social_type: str) -> User:
         user, created = User.objects.get_or_create(
             email=email,
             defaults={
@@ -29,7 +30,7 @@ class GoogleAuthService:
             SocialUser.objects.create(
                 user=user,
                 social_id=email,
-                social_type="google",
+                social_type=social_type,
             )
 
         elif not user.is_social_login:
@@ -40,11 +41,18 @@ class GoogleAuthService:
             SocialUser.objects.create(
                 user=user,
                 social_id=email,
-                social_type="google",
+                social_type=social_type,
             )
+
+        # 기존 회원이 아니라, 처음 소셜로 회원가입시 회원정보 입력을 위해서, 이메일인증
+        if not user.is_active:
+            EmailVerification.objects.filter(email=email, is_verified=False).delete()
+            EmailVerification.objects.create(email=email, is_verified=True)
 
         return user
 
+
+class GoogleAuthService:
     @staticmethod
     def start_google_auth(server_base_url: str, client_id: str) -> str:
         redirect_uri = f"{server_base_url}/auth/google/callback"
@@ -101,7 +109,9 @@ class GoogleAuthService:
         if not email:
             raise HttpError(400, "No email in user info")
 
-        user = GoogleAuthService.create_or_get_user(email=email, username=username)
+        user = SocialLoginService.create_or_get_user(
+            email=email, username=username, social_type="google"
+        )
         refresh = RefreshToken.for_user(user)
 
         return {
@@ -120,41 +130,6 @@ class GoogleAuthService:
 
 
 class KakaoAuthService:
-    @staticmethod
-    def create_or_get_user(email: str, username: str) -> User:
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={
-                "username": username,
-                "is_email_verified": True,
-                "is_social_login": True,
-            },
-        )
-
-        if created:
-            user.is_active = False
-            user.save()
-
-            # SocialUser 생성
-            SocialUser.objects.create(
-                user=user,
-                social_id=email,
-                social_type="kakao",
-            )
-
-        elif not user.is_social_login:
-            user.is_social_login = True
-            user.save()
-
-            # SocialUser 생성
-            SocialUser.objects.create(
-                user=user,
-                social_id=email,
-                social_type="kakao",
-            )
-
-        return user
-
     @staticmethod
     def start_kakao_auth(server_base_url: str, client_id: str) -> str:
         redirect_uri = f"{server_base_url}/auth/kakao/callback"
@@ -215,7 +190,9 @@ class KakaoAuthService:
 
         username = kakao_account.get("profile", {}).get("nickname", "")
 
-        user = KakaoAuthService.create_or_get_user(email=email, username=username)
+        user = SocialLoginService.create_or_get_user(
+            email=email, username=username, social_type="kakao"
+        )
         refresh = RefreshToken.for_user(user)
 
         return {
@@ -234,41 +211,6 @@ class KakaoAuthService:
 
 
 class NaverAuthService:
-    @staticmethod
-    def create_or_get_user(email: str, username: str) -> User:
-        user, created = User.objects.get_or_create(
-            email=email,
-            defaults={
-                "username": username,
-                "is_email_verified": True,
-                "is_social_login": True,
-            },
-        )
-
-        if created:
-            user.is_active = False
-            user.save()
-
-            # SocialUser 생성
-            SocialUser.objects.create(
-                user=user,
-                social_id=email,
-                social_type="naver",
-            )
-
-        elif not user.is_social_login:
-            user.is_social_login = True
-            user.save()
-
-            # SocialUser 생성
-            SocialUser.objects.create(
-                user=user,
-                social_id=email,
-                social_type="naver",
-            )
-
-        return user
-
     @staticmethod
     def start_naver_auth(server_base_url: str, client_id: str) -> str:
         redirect_uri = f"{server_base_url}/auth/naver/callback"
@@ -331,7 +273,9 @@ class NaverAuthService:
 
         username = response.get("name", "")
 
-        user = NaverAuthService.create_or_get_user(email=email, username=username)
+        user = SocialLoginService.create_or_get_user(
+            email=email, username=username, social_type="naver"
+        )
         refresh = RefreshToken.for_user(user)
 
         return {

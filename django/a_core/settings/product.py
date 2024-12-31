@@ -4,6 +4,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = [
     "chaeuda.shop",
+    "www.chaeuda.shop",
     "api.chaeuda.shop",
     "localhost",
     "127.0.0.1",
@@ -11,6 +12,7 @@ ALLOWED_HOSTS = [
 ]
 CORS_ALLOWED_ORIGINS = [
     "https://chaeuda.shop",
+    "https://www.chaeuda.shop",
     "https://api.chaeuda.shop",
     "http://localhost:5173",
     "http://localhost:3000",
@@ -18,6 +20,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CSRF_TRUSTED_ORIGINS = [
     "https://chaeuda.shop",
+    "https://www.chaeuda.shop",
     "https://api.chaeuda.shop",
     "http://localhost:5173",
     "http://localhost:3000",

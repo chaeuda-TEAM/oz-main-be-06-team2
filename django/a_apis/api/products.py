@@ -1,6 +1,5 @@
 from typing import Optional
 
-from a_apis.models import ProductDetail
 from a_apis.schema.products import (
     ProductAllResponseSchema,
     ProductAllSchema,
@@ -12,6 +11,7 @@ from ninja.errors import HttpError
 from ninja.files import UploadedFile
 from ninja.security import django_auth
 
+from a_apis.models import ProductDetail
 from django.contrib.auth.decorators import login_required
 
 router = Router()
