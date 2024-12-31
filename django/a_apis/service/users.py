@@ -1,4 +1,6 @@
+import random
 import re
+import string
 
 from a_apis.auth.cookies import create_auth_response
 from a_apis.models.email_verification import EmailVerification
@@ -19,6 +21,11 @@ User = get_user_model()
 
 
 class UserService:
+    @staticmethod
+    def _generate_random_password(length=12):
+        characters = string.ascii_letters + string.digits + string.punctuation
+        return "".join(random.choice(characters) for _ in range(length))
+
     @staticmethod
     def login_user(request, data: LoginSchema):
         try:
@@ -145,9 +152,11 @@ class UserService:
             if User.objects.filter(email=data.email, is_active=True).exists():
                 raise ValueError("이미 사용 중인 이메일입니다.")
 
-            # 비밀번호 복잡성 검사
-            if len(data.password) < 6:
-                raise ValueError("비밀번호는 최소 6자 이상이어야 합니다.")
+            user = User.objects.filter(email=data.email).first()
+            # 비밀번호 복잡성 검사 - 소셜 로그인 사용자는 제외
+            if not user.is_social_login:
+                if len(data.password) < 6:
+                    raise ValueError("비밀번호는 최소 6자 이상이어야 합니다.")
 
             # 전화번호 형식 검사
             phone_pattern = re.compile(r"^01[016789]-?[0-9]{3,4}-?[0-9]{4}$")
@@ -164,18 +173,32 @@ class UserService:
                 deleted_user.is_active = True
                 deleted_user.username = data.username
                 deleted_user.phone_number = data.phone_number
-                deleted_user.set_password(data.password)
+                if user.is_social_login:
+                    random_password = UserService._generate_random_password()
+                    deleted_user.set_password(random_password)
+                else:
+                    deleted_user.set_password(data.password)
+                deleted_user.is_social_login = user.is_social_login
                 deleted_user.save()
                 user = deleted_user
             else:
                 # 새 사용자 생성
-                user = User.objects.create_user(
-                    username=data.username,
-                    email=data.email,
-                    password=data.password,
-                    phone_number=data.phone_number,
-                    is_email_verified=True,
-                )
+                user_data = {
+                    "username": data.username,
+                    "email": data.email,
+                    "phone_number": data.phone_number,
+                    "is_email_verified": True,
+                    "is_social_login": user.is_social_login,
+                }
+
+                if user.is_social_login:
+                    random_password = UserService._generate_random_password()
+                    user = User.objects.create_user(
+                        **user_data, password=random_password
+                    )
+                else:
+                    user = User.objects.create_user(**user_data, password=data.password)
+
             # JWT 토큰 생성
             refresh = RefreshToken.for_user(user)
 
@@ -219,8 +242,12 @@ class UserService:
                 return {"success": False, "message": "인증되지 않은 사용자입니다."}
 
             # 비밀번호 확인
-            if not user.check_password(data.password):
-                return {"success": False, "message": "비밀번호가 일치하지 않습니다."}
+            if not user.is_social_login:
+                if not user.check_password(data.password):
+                    return {
+                        "success": False,
+                        "message": "비밀번호가 일치하지 않습니다.",
+                    }
 
             # 소프트 딜리트 처리
             user.is_active = False
