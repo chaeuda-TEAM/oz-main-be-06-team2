@@ -154,7 +154,7 @@ class UserService:
 
             user = User.objects.filter(email=data.email).first()
             # 비밀번호 복잡성 검사 - 소셜 로그인 사용자는 제외
-            if not user.is_social_login:
+            if not user or not user.is_social_login:
                 if len(data.password) < 6:
                     raise ValueError("비밀번호는 최소 6자 이상이어야 합니다.")
 
@@ -188,10 +188,10 @@ class UserService:
                     "email": data.email,
                     "phone_number": data.phone_number,
                     "is_email_verified": True,
-                    "is_social_login": user.is_social_login,
+                    "is_social_login": user.is_social_login if user else False,
                 }
 
-                if user.is_social_login:
+                if user and user.is_social_login:
                     random_password = UserService._generate_random_password()
                     user = User.objects.create_user(
                         **user_data, password=random_password
