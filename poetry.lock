@@ -488,6 +488,17 @@ socialaccount = ["pyjwt[crypto] (>=1.7)", "requests (>=2.0.0)", "requests-oauthl
 steam = ["python3-openid (>=3.0.8)"]
 
 [[package]]
+name = "django-cleanup"
+version = "9.0.0"
+description = "Deletes old files."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "django_cleanup-9.0.0-py3-none-any.whl", hash = "sha256:19f8b0e830233f9f0f683b17181f414672a0f48afe3ea3cc80ba47ae40ad880c"},
+    {file = "django_cleanup-9.0.0.tar.gz", hash = "sha256:bb9fb560aaf62959c81e31fa40885c36bbd5854d5aa21b90df2c7e4ba633531e"},
+]
+
+[[package]]
 name = "django-cors-headers"
 version = "4.6.0"
 description = "django-cors-headers is a Django application for handling the server headers required for Cross-Origin Resource Sharing (CORS)."
@@ -1489,4 +1500,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "3097d094f5bf480dd360d1f5830b7b34570f46ae7c0ca193e73bf2b14b9e6700"
+content-hash = "f232aca2d7312c0897ce41ce6fd484abe0aeb21464e8883f4bec28f0346538e8"
