@@ -107,7 +107,7 @@ class ProductImg(CommonModel):
     product_detail = models.ForeignKey(
         ProductDetail,
         on_delete=models.CASCADE,
-        verbose_name="상품 ID",
+        verbose_name="매물 ID",
         related_name="product_images",
     )
 
