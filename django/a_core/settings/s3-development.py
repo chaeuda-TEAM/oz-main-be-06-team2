@@ -68,3 +68,8 @@ SHELL_PLUS_IMPORTS = [
     "from django.conf import settings",
     "from django.core.cache import cache",
 ]
+
+# MIDDLEWARE 설정 추가
+MIDDLEWARE += [
+    "a_apis.middleware.ProcessPUTPatchMiddleware",
+]
