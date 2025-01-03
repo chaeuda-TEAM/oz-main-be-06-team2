@@ -1,4 +1,5 @@
 import os
+import uuid
 from typing import Optional
 
 import boto3
@@ -83,7 +84,8 @@ class ProductService:
             image_urls = []
             for image in images:
                 # S3에 파일 업로드
-                file_path = f"products/images/{image.name}"
+                file_extension = image.name.split(".")[-1]
+                file_path = f"products/images/{str(uuid.uuid4())[:8]}.{file_extension}"
                 saved_path = default_storage.save(file_path, image)
                 image_url = default_storage.url(saved_path)
                 image_urls.append(image_url)
@@ -206,7 +208,10 @@ class ProductService:
                     image_urls = []
                     for image in images:
                         # S3에 새 이미지 업로드
-                        file_path = f"products/images/{image.name}"
+                        file_extension = image.name.split(".")[-1]
+                        file_path = (
+                            f"products/images/{str(uuid.uuid4())[:8]}.{file_extension}"
+                        )
                         saved_path = default_storage.save(file_path, image)
                         image_url = default_storage.url(saved_path)
                         image_urls.append(image_url)
