@@ -10,11 +10,9 @@ from a_apis.models.products import (
     ProductVideo,
 )
 from a_apis.schema.products import (
-    ImageSchema,
     ProductAllResponseSchema,
     ProductAllSchema,
-    ProductDetailSchema,
-    VideoSchema,
+    ProductUpdateResponseSchema,
 )
 from dotenv import load_dotenv
 from ninja.errors import HttpError
@@ -193,7 +191,7 @@ class ProductService:
 
                 # 이미지 처리 - 새 이미지가 제공된 경우에만 업데이트
                 if images:
-                    old_images = list(product_detail.images.all())
+                    old_images = list(product_detail.product_images.all())
                     ProductImg.objects.filter(product_detail=product_detail).delete()
 
                     image_urls = []
@@ -212,9 +210,9 @@ class ProductService:
                     "images": (
                         [
                             default_storage.url(img.img_url.name)
-                            for img in product_detail.images.all()
+                            for img in product_detail.product_images.all()
                         ]
-                        if product_detail.images.exists()
+                        if product_detail.product_images.exists()
                         else None
                     ),
                     "video": (
@@ -240,11 +238,13 @@ class ProductService:
                         "latitude": product_detail.address.latitude,
                         "longitude": product_detail.address.longitude,
                     },
+                    "product_id": product_detail.id,  # product_id 추가
                 }
 
-                return ProductAllResponseSchema(
+                return ProductUpdateResponseSchema(
                     success=True,
                     message="성공적으로 수정되었습니다.",
+                    product_id=product_detail.id,
                     images=response_data["images"],
                     video=response_data["video"],
                     detail=response_data["detail"],
