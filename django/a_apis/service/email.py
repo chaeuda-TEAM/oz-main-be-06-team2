@@ -1,5 +1,6 @@
 from a_apis.models.email_verification import EmailVerification
 from a_user.models import User
+from ninja.responses import Response
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -89,7 +90,13 @@ class EmailService:
             return {"success": True, "message": "이메일 인증이 완료되었습니다."}
 
         except EmailVerification.DoesNotExist:
-            return {"success": False, "message": "유효하지 않은 인증번호입니다."}
+            return Response(
+                status=400,
+                data={
+                    "success": False,
+                    "message": "유효하지 않은 인증번호입니다.",
+                },
+            )
         except Exception as e:
             return {
                 "success": False,
