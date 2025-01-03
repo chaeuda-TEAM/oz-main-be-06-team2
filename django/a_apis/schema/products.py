@@ -46,6 +46,9 @@ class ProductDetailSchema(Schema):
     sale: Optional[bool] = Field(
         default=True, description="판매여부"
     )  # sale을 선택적 필드로 변경하고 기본값을 True로 설정
+    pro_rooms: int = Field(..., description="방 갯수")
+    pro_bathrooms: int = Field(..., description="욕실 갯수")
+    pro_construction_year: int = Field(..., description="건축연도")
 
 
 class ImageSchema(Schema):

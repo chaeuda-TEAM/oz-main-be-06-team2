@@ -70,6 +70,9 @@ class ProductService:
                 pro_site_a=data.detail.pro_site_a,
                 pro_heat=data.detail.pro_heat,
                 pro_type=data.detail.pro_type,
+                pro_rooms=data.detail.pro_rooms,
+                pro_bathrooms=data.detail.pro_bathrooms,
+                pro_construction_year=data.detail.pro_construction_year,
                 address=product_address,  # 주소 필드 설정
                 video=product_video,  # 동영상 필드 설정
             )
@@ -108,6 +111,9 @@ class ProductService:
                     "pro_heat": product_detail.pro_heat,
                     "pro_type": product_detail.pro_type,
                     "pro_floor": product_detail.pro_floor,
+                    "pro_rooms": product_detail.pro_rooms,
+                    "pro_bathrooms": product_detail.pro_bathrooms,
+                    "pro_construction_year": product_detail.pro_construction_year,
                     "description": product_detail.description,
                     "sale": product_detail.sale,
                 },
@@ -187,6 +193,9 @@ class ProductService:
                 product_detail.pro_site_a = data.detail.pro_site_a
                 product_detail.pro_heat = data.detail.pro_heat
                 product_detail.pro_type = data.detail.pro_type
+                product_detail.pro_rooms = data.detail.pro_rooms
+                product_detail.pro_bathrooms = data.detail.pro_bathrooms
+                product_detail.pro_construction_year = data.detail.pro_construction_year
                 product_detail.save()
 
                 # 이미지 처리 - 새 이미지가 제공된 경우에만 업데이트
@@ -229,6 +238,9 @@ class ProductService:
                         "pro_heat": product_detail.pro_heat,
                         "pro_type": product_detail.pro_type,
                         "pro_floor": product_detail.pro_floor,
+                        "pro_rooms": product_detail.pro_rooms,
+                        "pro_bathrooms": product_detail.pro_bathrooms,
+                        "pro_construction_year": product_detail.pro_construction_year,
                         "description": product_detail.description,
                         "sale": product_detail.sale,
                     },

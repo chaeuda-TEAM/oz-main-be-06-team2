@@ -72,6 +72,12 @@ class ProductDetail(CommonModel):
     pro_floor = models.IntegerField(verbose_name="층")
     description = models.TextField(verbose_name="상세설명")
     sale = models.BooleanField(default=True, verbose_name="판매여부")
+
+    # 새로운 필드명으로 변경
+    pro_rooms = models.IntegerField(verbose_name="방 갯수")
+    pro_bathrooms = models.IntegerField(verbose_name="욕실 갯수")
+    pro_construction_year = models.IntegerField(verbose_name="건축연도")
+
     address = models.ForeignKey(
         ProductAddress,
         on_delete=models.CASCADE,
