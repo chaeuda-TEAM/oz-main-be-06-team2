@@ -66,3 +66,9 @@ class LogoutSchema(Schema):
 class ErrorResponseSchema(Schema):
     success: bool
     message: Optional[str] = None
+
+
+class UpdateProfileSchema(Schema):
+    username: Optional[str] = None
+    password: Optional[str] = None
+    phone_number: Optional[str] = None

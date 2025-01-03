@@ -115,3 +115,18 @@ def logout(request, data: LogoutSchema):
         dict: 로그아웃 결과
     """
     return UserService.logout_user(data)
+
+
+@router.put("/update-profile", response=ErrorResponseSchema)
+def update_profile(request, data: UpdateProfileSchema):
+    """
+    회원 정보 수정 엔드포인트
+
+    Args:
+        request: HTTP 요청 객체
+        data: 회원 정보 수정 데이터 (UpdateProfileSchema)
+
+    Returns:
+        dict: 회원 정보 수정 결과
+    """
+    return UserService.update_user_profile(request, data)
