@@ -9,7 +9,7 @@ class EmailVerificationRequestSchema(Schema):
 
 class SignupSchema(Schema):
     username: str
-    password: str
+    password: Optional[str] = None
     phone_number: str
     email: str
 
