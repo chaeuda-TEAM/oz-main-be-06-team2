@@ -8,8 +8,10 @@ from a_apis.schema.users import (
     LoginSchema,
     LogoutSchema,
     SignupSchema,
+    UpdateProfileSchema,
     WithdrawalSchema,
 )
+from ninja.responses import Response
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
@@ -35,37 +37,49 @@ class UserService:
                     su.social_type.upper() for su in user.social_users.all()
                 ]
                 social_types_str = ", ".join(social_types)
-                return {
-                    "success": False,
-                    "message": f"{social_types_str} 로그인 사용자입니다. 소셜 로그인으로 로그인해주세요.",
-                }
+                return Response(
+                    status=400,
+                    data={
+                        "success": False,
+                        "message": f"{social_types_str} 로그인 사용자입니다. 소셜 로그인으로 로그인해주세요.",
+                    },
+                )
 
             user = authenticate(request, username=data.email, password=data.password)
             if user:
                 login(request, user)
                 refresh = RefreshToken.for_user(user)
-                return {
-                    "success": True,
-                    "message": "로그인 되었습니다.",
-                    "tokens": {
-                        "access": str(refresh.access_token),
-                        "refresh": str(refresh),
+                return Response(
+                    status=200,
+                    data={
+                        "success": True,
+                        "message": "로그인 되었습니다.",
+                        "tokens": {
+                            "access": str(refresh.access_token),
+                            "refresh": str(refresh),
+                        },
+                        "user": {
+                            "email": user.email,
+                            "username": user.username,
+                            "user_id": user.email,
+                        },
                     },
-                    "user": {
-                        "email": user.email,
-                        "username": user.username,
-                        "user_id": user.email,
-                    },
-                }
-            return {
-                "success": False,
-                "message": "이메일 또는 비밀번호가 잘못되었습니다.",
-            }
+                )
+            return Response(
+                status=400,
+                data={
+                    "success": False,
+                    "message": "이메일 또는 비밀번호가 잘못되었습니다.",
+                },
+            )
         except Exception as e:
-            return {
-                "success": False,
-                "message": f"로그인 처리 중 오류가 발생했습니다: {str(e)}",
-            }
+            return Response(
+                status=500,
+                data={
+                    "success": False,
+                    "message": f"로그인 처리 중 오류가 발생했습니다: {str(e)}",
+                },
+            )
 
     @staticmethod
     def refresh_token(refresh_token: str):
@@ -92,19 +106,34 @@ class UserService:
                 result, result["tokens"]["access"], result["tokens"]["refresh"]
             )
         except TokenError:
-            return {"success": False, "message": "유효하지 않은 리프레시 토큰입니다."}
+            return Response(
+                status=400,
+                data={
+                    "success": False,
+                    "message": "유효하지 않은 리프레시 토큰입니다.",
+                },
+            )
         except Exception as e:
-            return {
-                "success": False,
-                "message": f"토큰 갱신 중 오류가 발생했습니다: {str(e)}",
-            }
+            return Response(
+                status=500,
+                data={
+                    "success": False,
+                    "message": f"토큰 갱신 중 오류가 발생했습니다: {str(e)}",
+                },
+            )
 
     @staticmethod
     def get_user(request):
         try:
             user = request.auth
             if not user:
-                return {"success": False, "message": "인증되지 않은 사용자입니다."}
+                return Response(
+                    status=400,
+                    data={
+                        "success": False,
+                        "message": "인증되지 않은 사용자입니다.",
+                    },
+                )
 
             access_token = AccessToken(user)
             user_id = access_token["user_id"]
@@ -114,22 +143,37 @@ class UserService:
             refresh = RefreshToken.for_user(user)
 
             if not user.is_active:
-                return {"success": False, "message": "탈퇴한 사용자입니다."}
+                return Response(
+                    status=400,
+                    data={
+                        "success": False,
+                        "message": "탈퇴한 사용자입니다.",
+                    },
+                )
             else:
-                return {
-                    "success": True,
-                    "message": "인증된 사용자입니다.",
-                    "tokens": {
-                        "access": str(refresh.access_token),
-                        "refresh": str(refresh),
+                return Response(
+                    status=200,
+                    data={
+                        "success": True,
+                        "message": "인증된 사용자입니다.",
+                        "tokens": {
+                            "access": str(refresh.access_token),
+                            "refresh": str(refresh),
+                        },
+                        "user": {
+                            "email": user.email,
+                            "username": user.username,
+                        },
                     },
-                    "user": {
-                        "email": user.email,
-                        "username": user.username,
-                    },
-                }
+                )
         except Exception as e:
-            return {"success": False, "message": str(e)}
+            return Response(
+                status=500,
+                data={
+                    "success": False,
+                    "message": f"처리 중 오류가 발생했습니다: {str(e)}",
+                },
+            )
 
     @staticmethod
     def signup(data: SignupSchema):
@@ -205,32 +249,47 @@ class UserService:
             # 이메일 인증 데이터 삭제
             EmailVerification.objects.filter(email=data.email).delete()
 
-            return {
-                "success": True,
-                "message": "회원가입이 완료되었습니다.",
-                "tokens": {
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
+            return Response(
+                status=200,
+                data={
+                    "success": True,
+                    "message": "회원가입이 완료되었습니다.",
+                    "tokens": {
+                        "access": str(refresh.access_token),
+                        "refresh": str(refresh),
+                    },
+                    "user": {
+                        "email": user.email,
+                        "username": user.username,
+                    },
                 },
-                "user": {
-                    "email": user.email,
-                    "username": user.username,
-                },
-            }
+            )
         except ValueError as e:
-            return {"success": False, "message": str(e)}
+            return Response(
+                status=400,
+                data={"success": False, "message": str(e)},
+            )
         except Exception as e:
-            return {
-                "success": False,
-                "message": "회원가입 처리 중 오류가 발생했습니다.",
-            }
+            return Response(
+                status=500,
+                data={
+                    "success": False,
+                    "message": "회원가입 처리 중 오류가 발생했습니다.",
+                },
+            )
 
     @staticmethod
     def withdraw_user(request, data: WithdrawalSchema):
         try:
             user = request.auth
             if not user:
-                return {"success": False, "message": "인증되지 않은 사용자입니다."}
+                return Response(
+                    status=400,
+                    data={
+                        "success": False,
+                        "message": "인증되지 않은 사용자입니다.",
+                    },
+                )
 
             access_token = AccessToken(user)
             user_id = access_token["user_id"]
@@ -239,15 +298,24 @@ class UserService:
 
             # 인증되지 않은 사용자 체크
             if not user.is_authenticated:
-                return {"success": False, "message": "인증되지 않은 사용자입니다."}
+                return Response(
+                    status=400,
+                    data={
+                        "success": False,
+                        "message": "인증되지 않은 사용자입니다.",
+                    },
+                )
 
             # 비밀번호 확인
             if not user.is_social_login:
                 if not user.check_password(data.password):
-                    return {
-                        "success": False,
-                        "message": "비밀번호가 일치하지 않습니다.",
-                    }
+                    return Response(
+                        status=400,
+                        data={
+                            "success": False,
+                            "message": "비밀번호가 일치하지 않습니다.",
+                        },
+                    )
 
             # 소프트 딜리트 처리
             user.is_active = False
@@ -256,13 +324,22 @@ class UserService:
             # 로그아웃 처리를 위한 토큰 무효화
             RefreshToken.for_user(user)
 
-            return {"success": True, "message": "회원 탈퇴가 완료되었습니다."}
+            return Response(
+                status=200,
+                data={
+                    "success": True,
+                    "message": "회원 탈퇴가 완료되었습니다.",
+                },
+            )
 
         except Exception as e:
-            return {
-                "success": False,
-                "message": f"회원 탈퇴 처리 중 오류가 발생했습니다: {str(e)}",
-            }
+            return Response(
+                status=500,
+                data={
+                    "success": False,
+                    "message": f"회원 탈퇴 처리 중 오류가 발생했습니다: {str(e)}",
+                },
+            )
 
     @staticmethod
     def logout_user(data: LogoutSchema):
@@ -273,12 +350,66 @@ class UserService:
             # 토큰 블랙리스트에 추가
             token.blacklist()
 
-            return {"success": True, "message": "로그아웃 되었습니다."}
+            return Response(
+                status=200,
+                data={"success": True, "message": "로그아웃 되었습니다."},
+            )
 
         except TokenError:
-            return {"success": False, "message": "유효하지 않은 토큰입니다."}
+            return Response(
+                status=400,
+                data={
+                    "success": False,
+                    "message": "유효하지 않은 토큰입니다.",
+                },
+            )
         except Exception as e:
-            return {
-                "success": False,
-                "message": f"로그아웃 처리 중 오류가 발생했습니다: {str(e)}",
-            }
+            return Response(
+                status=500,
+                data={
+                    "success": False,
+                    "message": f"로그아웃 처리 중 오류가 발생했습니다: {str(e)}",
+                },
+            )
+
+    @staticmethod
+    def update_user_profile(request, data: UpdateProfileSchema):
+        try:
+            user = request.auth
+            access_token = AccessToken(user)
+            user_id = access_token["user_id"]
+            user = User.objects.get(id=user_id)
+
+            if data.username:
+                # 자신의 현재 username이 아닌 다른 username으로 변경하려는 경우에만 중복 체크
+                if (
+                    user.username != data.username
+                    and User.objects.filter(username=data.username).exists()
+                ):
+                    return Response(
+                        status=400,
+                        data={
+                            "success": False,
+                            "message": "이미 사용 중인 사용자 이름입니다.",
+                        },
+                    )
+                user.username = data.username
+
+            if data.password:
+                user.set_password(data.password)
+            if data.phone_number:
+                user.phone_number = data.phone_number
+
+            user.save()
+            return Response(
+                status=200,
+                data={"success": True, "message": "회원 정보가 수정되었습니다."},
+            )
+        except Exception as e:
+            return Response(
+                status=500,
+                data={
+                    "success": False,
+                    "message": f"회원 정보 수정 중 오류가 발생했습니다: {str(e)}",
+                },
+            )
