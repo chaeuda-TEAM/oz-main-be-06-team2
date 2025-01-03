@@ -97,7 +97,7 @@ def verify_email(request, data: EmailVerificationSchema):
     return EmailService.verify_email(data.email, data.code)
 
 
-@router.post("/withdraw", response=ErrorResponseSchema)
+@router.delete("/withdraw", response=ErrorResponseSchema)
 def withdraw(request, data: WithdrawalSchema):
     """
     회원 탈퇴 엔드포인트

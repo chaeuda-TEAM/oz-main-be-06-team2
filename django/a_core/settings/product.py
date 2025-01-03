@@ -2,9 +2,17 @@ from .base import *
 
 DEBUG = False
 
-ALLOWED_HOSTS = ["chaeuda.shop", "api.chaeuda.shop", "localhost", "127.0.0.1"]
+ALLOWED_HOSTS = [
+    "chaeuda.shop",
+    "www.chaeuda.shop",
+    "api.chaeuda.shop",
+    "localhost",
+    "127.0.0.1",
+    "54.180.104.88",  # EC2 IP
+]
 CORS_ALLOWED_ORIGINS = [
     "https://chaeuda.shop",
+    "https://www.chaeuda.shop",
     "https://api.chaeuda.shop",
     "http://localhost:5173",
     "http://localhost:3000",
@@ -12,6 +20,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CSRF_TRUSTED_ORIGINS = [
     "https://chaeuda.shop",
+    "https://www.chaeuda.shop",
     "https://api.chaeuda.shop",
     "http://localhost:5173",
     "http://localhost:3000",
@@ -37,6 +46,7 @@ CORS_ALLOW_METHODS = [
     "POST",
     "PUT",
 ]
+
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
@@ -64,12 +74,17 @@ DATABASES = {
     }
 }
 
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB limit
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB limit
 
 AWS_ACCESS_KEY_ID = os.getenv("AWS_S3_ACCESS_KEY_ID", "")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_S3_SECRET_ACCESS_KEY", "")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_S3_STORAGE_BUCKET_NAME", "")
 AWS_S3_REGION_NAME = os.getenv("AWS_S3_REGION_NAME", "")
 AWS_S3_CUSTOM_DOMAIN = os.getenv("AWS_CLOUDFRONT_DOMAIN", "")
+AWS_S3_OBJECT_PARAMETERS = {
+    "CacheControl": "max-age=86400",
+}
 
 STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
 STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"

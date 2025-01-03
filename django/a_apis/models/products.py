@@ -6,7 +6,7 @@ from django.db import models
 
 
 class ProductAddress(CommonModel):
-    id = models.AutoField(primary_key=True, verbose_name="매물주소 ID")
+    id = models.BigAutoField(primary_key=True, verbose_name="매물주소 ID")
     add_new = models.CharField(max_length=255, verbose_name="도로명주소")
     add_old = models.CharField(max_length=255, verbose_name="구주소")
     latitude = models.DecimalField(max_digits=10, decimal_places=6, verbose_name="위도")
@@ -24,7 +24,7 @@ class ProductAddress(CommonModel):
 
 
 class ProductVideo(CommonModel):
-    id = models.AutoField(primary_key=True, verbose_name="동영상 ID")
+    id = models.BigAutoField(primary_key=True, verbose_name="동영상 ID")
     video_url = models.FileField(
         upload_to="video/", null=True, blank=True, verbose_name="동영상 URL"
     )
@@ -50,8 +50,10 @@ class ProductDetail(CommonModel):
         ("multi", "다세대주택"),
         ("type_etc", "기타"),
     ]
-    id = models.AutoField(primary_key=True, verbose_name="매물 ID")
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="유저 ID")
+    id = models.BigAutoField(primary_key=True, verbose_name="매물 ID")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, verbose_name="유저 ID", db_column="user"
+    )
     pro_title = models.CharField(max_length=50, verbose_name="제목")
     pro_price = models.IntegerField(verbose_name="매물금액")
     management_cost = models.IntegerField(verbose_name="관리비", null=True, blank=True)
@@ -70,6 +72,12 @@ class ProductDetail(CommonModel):
     pro_floor = models.IntegerField(verbose_name="층")
     description = models.TextField(verbose_name="상세설명")
     sale = models.BooleanField(default=True, verbose_name="판매여부")
+
+    # 새로운 필드명으로 변경
+    pro_rooms = models.IntegerField(verbose_name="방 갯수")
+    pro_bathrooms = models.IntegerField(verbose_name="욕실 갯수")
+    pro_construction_year = models.IntegerField(verbose_name="건축연도")
+
     address = models.ForeignKey(
         ProductAddress,
         on_delete=models.CASCADE,
@@ -93,20 +101,25 @@ class ProductDetail(CommonModel):
     def __str__(self):
         return self.pro_title
 
+    def get_user_info(self):
+        return f"{self.user.email}"  # 또는 원하는 사용자 정보 표시 형식
+
+    get_user_info.short_description = "사용자"  # admin에서 보여질 컬럼명
+
 
 class ProductImg(CommonModel):
-    id = models.AutoField(primary_key=True, verbose_name="이미지 ID")
+    id = models.BigAutoField(primary_key=True, verbose_name="이미지 ID")
     img_url = models.FileField(upload_to="img/", verbose_name="이미지 URL")
     product_detail = models.ForeignKey(
         ProductDetail,
         on_delete=models.CASCADE,
-        verbose_name="상품 ID",
+        verbose_name="매물 ID",
         related_name="product_images",
     )
 
     class Meta:
         db_table = "product_img"
-        verbose_name = ("이미지",)
+        verbose_name = "이미지"
         verbose_name_plural = "이미지"
 
     def __str__(self):

@@ -38,7 +38,7 @@ class ProductVideoAdmin(admin.ModelAdmin):
 class ProductDetailAdmin(admin.ModelAdmin):
     list_display = (
         "id",
-        "user",
+        "get_user_info",
         "pro_title",
         "pro_price",
         "pro_type",

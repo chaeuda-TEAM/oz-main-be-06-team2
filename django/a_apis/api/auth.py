@@ -20,6 +20,17 @@ def google_auth_start_local(request):
 
 @router.get("/google/callback/dev", response=SocialLoginResponseSchema)
 def google_auth_callback_local(request, code: str = None):
+    """
+    Google 로그인 콜백 API
+    is_active 값이 False인 경우 처음 로그인 한 회원이므로, 회원가입 페이지로 이동
+
+    Args:
+        request: Django 요청 객체
+        code (str): 인증 코드
+
+    Returns:
+        SocialLoginResponseSchema: 로그인 응답 데이터
+    """
     return GoogleAuthService.callback_google_auth(
         code=code,
         server_base_url=settings.SERVER_BASE_URL_DEV,
