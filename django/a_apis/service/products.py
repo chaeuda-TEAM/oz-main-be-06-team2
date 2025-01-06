@@ -2,21 +2,22 @@ import os
 import uuid
 from typing import Optional
 
-import boto3
-import requests
 from a_apis.models.products import (
     ProductAddress,
     ProductDetail,
     ProductImg,
+    ProductLikes,
     ProductVideo,
 )
 from a_apis.schema.products import (
     ProductAllResponseSchema,
     ProductAllSchema,
+    ProductLikeResponseSchema,
     ProductUpdateResponseSchema,
 )
 from dotenv import load_dotenv
 from ninja.errors import HttpError
+from ninja.responses import Response
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -24,7 +25,6 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
-from django.http import JsonResponse
 
 load_dotenv()
 
@@ -40,7 +40,9 @@ class ProductService:
         video: Optional[UploadedFile],
     ):
         if not user.is_authenticated:
-            raise HttpError(401, "로그인이 필요합니다.")
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
 
         try:
             # ProductAddress 객체 생성
@@ -138,9 +140,17 @@ class ProductService:
             )
 
         except ValueError as e:
-            raise HttpError(400, f"잘못된 요청: {str(e)}")
+            return Response(
+                {"success": False, "message": f"잘못된 요청: {str(e)}"}, status=400
+            )
         except Exception as e:
-            raise HttpError(500, f"데이터 저장 중 오류가 발생했습니다: {str(e)}")
+            return Response(
+                {
+                    "success": False,
+                    "message": f"데이터 저장 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
 
     # 매물 수정
     @staticmethod
@@ -152,16 +162,27 @@ class ProductService:
         video: Optional[UploadedFile],
     ):
         if not user.is_authenticated:
-            raise HttpError(401, "로그인이 필요합니다.")
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
 
         try:
             # 매물 존재 여부와 권한 체크를 분리
             try:
                 product_detail = ProductDetail.objects.get(id=product_id)
                 if product_detail.user != user:
-                    raise HttpError(403, "해당 매물을 수정할 권한이 없습니다.")
+                    return Response(
+                        {
+                            "success": False,
+                            "message": "해당 매물을 수정할 권한이 없습니다.",
+                        },
+                        status=403,
+                    )
             except ProductDetail.DoesNotExist:
-                raise HttpError(404, "매물을 찾을 수 없습니다.")
+                return Response(
+                    {"success": False, "message": "매물을 찾을 수 없습니다."},
+                    status=404,
+                )
 
             with transaction.atomic():
                 # 주소 정보 업데이트
@@ -269,6 +290,60 @@ class ProductService:
                 )
 
         except ValueError as e:
-            raise HttpError(400, f"잘못된 요청: {str(e)}")
+            return Response(
+                {"success": False, "message": f"잘못된 요청: {str(e)}"}, status=400
+            )
         except Exception as e:
-            raise HttpError(500, f"데이터 수정 중 오류가 발생했습니다: {str(e)}")
+            return Response(
+                {
+                    "success": False,
+                    "message": f"데이터 수정 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
+
+    # 매물 찜하기/취소 서비스
+    @staticmethod
+    def toggle_like_product(user: User, product_id: int):
+        """매물 찜하기/취소 서비스"""
+        if not user.is_authenticated:
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
+
+        try:
+            product = ProductDetail.objects.get(id=product_id)
+
+            # 이미 찜한 경우 -> 찜하기 취소
+            if product.likes.filter(id=user.id).exists():
+                product.likes.remove(user)
+                is_liked = False
+                message = "찜하기가 취소되었습니다."
+                created_at = None
+            # 찜하지 않은 경우 -> 찜하기
+            else:
+                product.likes.add(user)
+                is_liked = True
+                message = "찜하기가 완료되었습니다."
+                like_obj = ProductLikes.objects.get(user=user, product=product)
+                created_at = like_obj.created_at
+
+            return ProductLikeResponseSchema(
+                success=True,
+                message=message,
+                is_liked=is_liked,
+                created_at=created_at,
+            )
+
+        except ProductDetail.DoesNotExist:
+            return Response(
+                {"success": False, "message": "매물을 찾을 수 없습니다."}, status=404
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"찜하기 처리 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )

@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import Optional, Union
 
@@ -84,3 +85,12 @@ class ProductUpdateResponseSchema(Schema):
     video: Optional[str] = None
     detail: ProductDetailSchema
     address: AddressSchema
+
+
+class ProductLikeResponseSchema(Schema):
+    success: bool
+    message: str
+    is_liked: bool  # 찜하기 상태
+    created_at: Optional[datetime] = Field(
+        None, description="찜하기 생성 시간"
+    )  # None 허용
