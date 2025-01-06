@@ -32,6 +32,9 @@ class UserResponseSchema(Schema):
     email: str
     username: str
     phone_number: str
+    is_active: bool
+    is_email_verified: bool
+    is_social_login: bool
 
 
 class AuthResponseSchema(Schema):
