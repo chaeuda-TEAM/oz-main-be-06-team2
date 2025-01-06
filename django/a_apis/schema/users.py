@@ -31,6 +31,7 @@ class UserSchema(Schema):
 class UserResponseSchema(Schema):
     email: str
     username: str
+    phone_number: str
 
 
 class AuthResponseSchema(Schema):
