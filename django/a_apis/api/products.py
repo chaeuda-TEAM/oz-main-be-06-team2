@@ -6,16 +6,17 @@ from a_apis.models import ProductDetail
 from a_apis.schema.products import (
     ProductAllResponseSchema,
     ProductAllSchema,
+    ProductLikeResponseSchema,
     ProductUpdateResponseSchema,
 )
 from a_apis.service.products import ProductService
 from ninja import Body, File, Router
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
+from ninja.responses import Response
 from ninja.security import django_auth
 
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
 
 logger = logging.getLogger(__name__)
 
@@ -53,9 +54,9 @@ def create_product(
         response_data = ProductService.create_product(user, data, images, video)
         return response_data
     except HttpError as e:
-        return JsonResponse({"success": False, "message": str(e)}, status=e.status_code)
+        return Response({"success": False, "message": str(e)}, status=e.status_code)
     except Exception as e:
-        return JsonResponse(
+        return Response(
             {"success": False, "message": "서버 오류가 발생했습니다."}, status=500
         )
 
@@ -85,9 +86,43 @@ def update_product(
         return response_data
 
     except HttpError as e:
-        return JsonResponse({"success": False, "message": str(e)}, status=e.status_code)
+        return Response({"success": False, "message": str(e)}, status=e.status_code)
     except Exception as e:
-        return JsonResponse(
+        return Response(
+            {"success": False, "message": "서버 오류가 발생했습니다."}, status=500
+        )
+
+
+@router.post("/like/{product_id}", response=ProductLikeResponseSchema)
+@login_required
+def toggle_like_product(
+    request,
+    product_id: int,
+):
+    """
+    매물 찜하기/취소 API
+    ```
+    Args:
+        request: Django 요청 객체
+        product_id (int): 찜하기/취소할 매물 ID
+
+    Returns:
+        ProductLikeResponseSchema: 찜하기 처리 결과
+        - success: 처리 성공 여부
+        - message: 처리 결과 메시지
+        - is_liked: 찜하기 상태 (True: 찜 완료, False: 찜 취소)
+        - created_at: 찜하기 생성 시간 (찜하기인 경우에만 포함 / 취소하면 null 반환)
+    ```
+    """
+    try:
+        user = request.user
+        response_data = ProductService.toggle_like_product(user, product_id)
+        return response_data
+
+    except HttpError as e:
+        return Response({"success": False, "message": str(e)}, status=e.status_code)
+    except Exception as e:
+        return Response(
             {"success": False, "message": "서버 오류가 발생했습니다."}, status=500
         )
 
