@@ -61,6 +61,7 @@ class UserService:
                         "user": {
                             "email": user.email,
                             "username": user.username,
+                            "phone_number": user.phone_number,
                             "user_id": user.email,
                         },
                     },
@@ -163,6 +164,7 @@ class UserService:
                         "user": {
                             "email": user.email,
                             "username": user.username,
+                            "phone_number": user.phone_number,
                         },
                     },
                 )
