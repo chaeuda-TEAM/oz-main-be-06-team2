@@ -58,6 +58,7 @@ CUSTOM_APPS = [
     "a_user.apps.AUserConfig",
     "a_common.apps.ACommonConfig",
     "a_apis.apps.AApisConfig",
+    "a_chat.apps.AChatConfig",
 ]
 
 THIRD_PARTY_APPS = [
