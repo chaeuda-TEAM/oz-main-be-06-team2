@@ -92,6 +92,12 @@ class ProductDetail(CommonModel):
         blank=True,
         related_name="product_video",
     )
+    likes = models.ManyToManyField(
+        User,
+        through="ProductLikes",
+        verbose_name="유저-매물 찜 목록",
+        related_name="product_likes",
+    )
 
     class Meta:
         db_table = "product_detail"
@@ -124,3 +130,26 @@ class ProductImg(CommonModel):
 
     def __str__(self):
         return self.img_url.url
+
+
+# 중간 테이블 모델
+class ProductLikes(CommonModel):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name="유저 ID",
+        related_name="user_likes",  # 유저 -> 찜한 매물 접근
+    )
+    product = models.ForeignKey(
+        ProductDetail,
+        on_delete=models.CASCADE,
+        verbose_name="매물 ID",
+        related_name="product_likes",  # 매물 -> 찜한 유저 접근
+    )
+
+    class Meta:
+        db_table = "product_like"
+        verbose_name = "찜한 매물"
+        verbose_name_plural = "찜 목록"
+        # 동일한 유저가 같은 매물을 중복해서 찜하지 못하도록
+        unique_together = ("user", "product")
