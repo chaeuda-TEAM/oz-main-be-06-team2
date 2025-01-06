@@ -62,6 +62,7 @@ class UserService:
                             "email": user.email,
                             "username": user.username,
                             "phone_number": user.phone_number,
+                            "is_active": user.is_active,
                             "user_id": user.email,
                         },
                     },
@@ -165,6 +166,7 @@ class UserService:
                             "email": user.email,
                             "username": user.username,
                             "phone_number": user.phone_number,
+                            "is_active": user.is_active,
                         },
                     },
                 )
@@ -263,6 +265,8 @@ class UserService:
                     "user": {
                         "email": user.email,
                         "username": user.username,
+                        "phone_number": user.phone_number,
+                        "is_active": user.is_active,
                     },
                 },
             )
