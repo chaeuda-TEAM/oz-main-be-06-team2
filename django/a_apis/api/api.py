@@ -1,6 +1,7 @@
 from ninja import NinjaAPI
 
 from .auth import router as auth_router
+from .chat import router as chat_router
 from .health import router as health_router
 from .legal import router as legal_router
 from .products import public_router as product_public_router
@@ -21,3 +22,4 @@ api.add_router("/legal/", legal_router, tags=["Test"])
 api.add_router("/", health_router, tags=["Test"])
 api.add_router("/product/", product_router, tags=["Products"])
 api.add_router("/product/", product_public_router, tags=["Products"])
+api.add_router("/chat/", chat_router, tags=["Chat"])
