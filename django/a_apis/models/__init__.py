@@ -1,3 +1,4 @@
+from .chat import ChatMessage, ChatRoom
 from .email_verification import EmailVerification
 from .products import ProductAddress, ProductDetail, ProductImg, ProductVideo
 
@@ -7,4 +8,6 @@ __all__ = [
     "ProductAddress",
     "ProductImg",
     "ProductVideo",
+    "ChatRoom",
+    "ChatMessage",
 ]
