@@ -22,7 +22,7 @@ def create_chat_room(request, item_id: int, buyer_id: int):
 
     buyer = User.objects.get(id=buyer_id)
     chat_room, created = ChatRoom.objects.get_or_create(
-        item=item, seller=item.id, buyer=buyer
+        item=item, seller=item.user, buyer=buyer
     )
     return {"chat_room_id": chat_room.id, "created": created}
 
