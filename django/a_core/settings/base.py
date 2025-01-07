@@ -71,6 +71,7 @@ THIRD_PARTY_APPS = [
     "corsheaders",
     "storages",
     "django_cleanup.apps.CleanupConfig",
+    "channels",
 ]
 
 INSTALLED_APPS = DEFAULT_APPS + CUSTOM_APPS + THIRD_PARTY_APPS
