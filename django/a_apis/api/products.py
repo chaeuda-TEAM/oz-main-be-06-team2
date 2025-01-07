@@ -8,6 +8,7 @@ from a_apis.schema.products import (
     ProductAllSchema,
     ProductLikeResponseSchema,
     ProductUpdateResponseSchema,
+    UserLikedProductsResponseSchema,
 )
 from a_apis.service.products import ProductService
 from ninja import Body, File, Router
@@ -119,6 +120,42 @@ def toggle_like_product(
         response_data = ProductService.toggle_like_product(user, product_id)
         return response_data
 
+    except HttpError as e:
+        return Response({"success": False, "message": str(e)}, status=e.status_code)
+    except Exception as e:
+        return Response(
+            {"success": False, "message": "서버 오류가 발생했습니다."}, status=500
+        )
+
+
+@router.get("/like-mylist", response=UserLikedProductsResponseSchema)
+@login_required
+def mylist_like_products(request):
+    """
+    사용자가 찜한 매물 목록 조회 API
+    ```
+    Args:
+        request: Django 요청 객체
+
+    Returns:
+        UserLikedProductsResponseSchema: 찜한 매물 목록 조회 결과
+        - success: bool (요청 처리 성공 여부)
+        - message: str (응답 메시지)
+        - total_count: int (전체 찜한 매물 수)
+        - products: list[UserLikedProductsSchema] (찜한 매물 목록)
+            - product_id: int (매물 ID)
+            - pro_title: str (매물 제목)
+            - pro_price: int (매물 가격)
+            - pro_type: str (건물 유형)
+            - pro_supply_a: float (공급면적)
+            - pro_address: str (매물 도로명주소)
+            - image_url: str (매물 이미지 URL - 첫 번째 이미지)
+            - created_at: datetime (찜한 시간)
+    ```
+    """
+    try:
+        response_data = ProductService.mylist_like_products(request.user)
+        return response_data
     except HttpError as e:
         return Response({"success": False, "message": str(e)}, status=e.status_code)
     except Exception as e:
