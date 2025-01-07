@@ -365,6 +365,15 @@ class ProductService:
                 .order_by("-created_at")
             )
 
+            # 찜한 매물이 없는 경우도 정상 응답
+            if not liked_products.exists():
+                return UserLikedProductsResponseSchema(
+                    success=True,
+                    message="찜한 매물이 없습니다.",
+                    total_count=0,
+                    products=[],
+                )
+
             products_data = []
             for like in liked_products:
                 # 첫 번째 이미지를 가져오기
