@@ -14,6 +14,8 @@ from a_apis.schema.products import (
     ProductAllSchema,
     ProductLikeResponseSchema,
     ProductUpdateResponseSchema,
+    UserLikedProductsResponseSchema,
+    UserLikedProductsSchema,
 )
 from dotenv import load_dotenv
 from ninja.errors import HttpError
@@ -305,7 +307,6 @@ class ProductService:
     # 매물 찜하기/취소 서비스
     @staticmethod
     def toggle_like_product(user: User, product_id: int):
-        """매물 찜하기/취소 서비스"""
         if not user.is_authenticated:
             return Response(
                 {"success": False, "message": "로그인이 필요합니다."}, status=401
@@ -344,6 +345,56 @@ class ProductService:
                 {
                     "success": False,
                     "message": f"찜하기 처리 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
+
+    # 사용자가 찜한 매물 목록 조회
+    @staticmethod
+    def mylist_like_products(user):
+        if not user.is_authenticated:
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
+
+        try:
+            liked_products = (
+                ProductLikes.objects.filter(user=user)
+                .select_related("product", "product__address")
+                .prefetch_related("product__product_images")
+                .order_by("-created_at")
+            )
+
+            products_data = []
+            for like in liked_products:
+                # 첫 번째 이미지를 가져오기
+                first_image = like.product.product_images.first()
+                image_url = first_image.img_url if first_image else None
+
+                product_data = UserLikedProductsSchema(
+                    product_id=like.product.id,
+                    pro_title=like.product.pro_title,
+                    pro_price=like.product.pro_price,
+                    pro_address=like.product.address.add_new,
+                    pro_type=like.product.pro_type,
+                    pro_supply_a=like.product.pro_supply_a,
+                    image_url=image_url,
+                    created_at=like.created_at,
+                )
+                products_data.append(product_data)
+
+            return UserLikedProductsResponseSchema(
+                success=True,
+                message="찜한 매물 목록을 성공적으로 조회했습니다.",
+                total_count=len(products_data),
+                products=products_data,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"찜한 매물 목록 조회 중 오류가 발생했습니다: {str(e)}",
                 },
                 status=500,
             )

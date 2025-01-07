@@ -94,3 +94,23 @@ class ProductLikeResponseSchema(Schema):
     created_at: Optional[datetime] = Field(
         None, description="찜하기 생성 시간"
     )  # None 허용
+
+
+class UserLikedProductsSchema(Schema):
+    product_id: int = Field(..., description="매물 ID")
+    pro_title: str = Field(..., description="매물 제목")
+    pro_price: int = Field(..., description="매물 가격")
+    pro_type: str = Field(..., description="건물 유형")
+    pro_supply_a: float = Field(..., description="공급면적")
+    pro_address: str = Field(..., description="매물 주소(도로명)")
+    image_url: Optional[str] = Field(
+        None, description="매물 이미지 URL(첫 번째 이미지)"
+    )
+    created_at: datetime = Field(..., description="찜한 시간")
+
+
+class UserLikedProductsResponseSchema(Schema):
+    success: bool = Field(..., description="요청 처리 성공 여부")
+    message: str = Field(..., description="응답 메시지")
+    total_count: int = Field(..., description="전체 찜한 매물 수")
+    products: list[UserLikedProductsSchema] = Field(..., description="찜한 매물 목록")
