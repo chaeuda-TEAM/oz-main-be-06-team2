@@ -3,21 +3,27 @@ from a_user.models import User
 from ninja.responses import Response
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.core.validators import validate_email
 
 
 class EmailService:
     @staticmethod
     def send_verification_email(email: str) -> dict:
         try:
+            validate_email(email)
             # 유저의 이메일이 이미 인증되었는지 확인
             if User.objects.filter(
                 email=email, is_email_verified=True, is_active=True
             ).exists():
-                return {
-                    "success": False,
-                    "message": "이미 인증된 이메일입니다.",
-                }
+                return Response(
+                    status=400,
+                    data={
+                        "success": False,
+                        "message": "이미 인증된 이메일입니다.",
+                    },
+                )
 
             # 기존 미인증 코드 삭제
             EmailVerification.objects.filter(email=email, is_verified=False).delete()
@@ -65,11 +71,22 @@ class EmailService:
                 "message": "인증번호가 이메일로 발송되었습니다. 이메일을 확인해주세요.",
             }
 
+        except ValidationError as e:
+            return Response(
+                status=400,
+                data={
+                    "success": False,
+                    "message": f"이메일 형식이 올바르지 않습니다: {str(e)}",
+                },
+            )
         except Exception as e:
-            return {
-                "success": False,
-                "message": f"이메일 전송 중 오류가 발생했습니다: {str(e)}",
-            }
+            return Response(
+                status=500,
+                data={
+                    "success": False,
+                    "message": f"이메일 전송 중 오류가 발생했습니다: {str(e)}",
+                },
+            )
 
     @staticmethod
     def verify_email(email: str, code: str) -> dict:
