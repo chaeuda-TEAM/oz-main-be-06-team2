@@ -113,7 +113,7 @@ class GoogleAuthService:
             raise HttpError(400, "No email in user info")
 
         user = SocialLoginService.create_or_get_user(
-            email=email, username=username, social_type="google"
+            email=email, username=username, social_type="google", phone_number=None
         )
         refresh = RefreshToken.for_user(user)
 
@@ -195,7 +195,7 @@ class KakaoAuthService:
         username = kakao_account.get("profile", {}).get("nickname", "")
 
         user = SocialLoginService.create_or_get_user(
-            email=email, username=username, social_type="kakao"
+            email=email, username=username, social_type="kakao", phone_number=None
         )
         refresh = RefreshToken.for_user(user)
 
