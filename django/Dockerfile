@@ -47,4 +47,11 @@ RUN python manage.py makemigrations --noinput --settings=a_core.settings.product
 EXPOSE 8000
 
 # Define the default command to run the application
-CMD ["gunicorn", "a_core.asgi:application", "-k", "uvicorn.workers.UvicornWorker", "--workers", "4", "--bind", "0.0.0.0:8000"] 
+CMD ["gunicorn", "a_core.asgi:application", \
+     "-k", "uvicorn.workers.UvicornWorker", \
+     "--workers", "2", \
+     "--worker-connections", "1000", \
+     "--timeout", "300", \
+     "--bind", "0.0.0.0:8000", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "50"] 
