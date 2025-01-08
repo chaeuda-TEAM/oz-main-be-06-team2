@@ -40,7 +40,7 @@ CACHES = {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CLIENT_CLASS": "django_redis.client.HerdClient",
             "RETRY_ON_TIMEOUT": True,
             "MAX_CONNECTIONS": 100,
             "CONNECTION_POOL_KWARGS": {
@@ -65,7 +65,9 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [f"redis://{REDIS_HOST}:{REDIS_PORT}/0"],
+            "hosts": [
+                f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
+            ],
             "capacity": 1500,
             "expiry": 10,
             "prefix": "asgi:",
