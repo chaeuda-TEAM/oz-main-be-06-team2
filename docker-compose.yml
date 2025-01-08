@@ -5,7 +5,6 @@ services:
     build:
       context: .
       dockerfile: django/Dockerfile
-    command: gunicorn a_core.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - ./django/:/app/
       - static_volume:/app/static
@@ -15,7 +14,15 @@ services:
     networks:
       - backend-network
     environment:
-      - DJANGO_SETTINGS_MODULE=a_core.settings.product
+      - DJANGO_SETTINGS_MODULE=a_core.settings.product_asgi
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
 
   nginx:
     image: nginx:1.21-alpine
