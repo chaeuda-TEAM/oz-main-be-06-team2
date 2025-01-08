@@ -2,21 +2,28 @@ import os
 import uuid
 from typing import Optional
 
-import boto3
-import requests
 from a_apis.models.products import (
     ProductAddress,
     ProductDetail,
     ProductImg,
+    ProductLikes,
     ProductVideo,
 )
 from a_apis.schema.products import (
+    AddressSchema,
     ProductAllResponseSchema,
     ProductAllSchema,
+    ProductDetailResponseSchema,
+    ProductDetailSchema,
+    ProductLikeResponseSchema,
     ProductUpdateResponseSchema,
+    UserLikedProductsResponseSchema,
+    UserLikedProductsSchema,
+    UserProductsResponseSchema,
 )
 from dotenv import load_dotenv
 from ninja.errors import HttpError
+from ninja.responses import Response
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -24,7 +31,6 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from django.core.files.uploadedfile import UploadedFile
 from django.db import transaction
-from django.http import JsonResponse
 
 load_dotenv()
 
@@ -40,7 +46,9 @@ class ProductService:
         video: Optional[UploadedFile],
     ):
         if not user.is_authenticated:
-            raise HttpError(401, "로그인이 필요합니다.")
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
 
         try:
             # ProductAddress 객체 생성
@@ -135,12 +143,22 @@ class ProductService:
                 video=response_data["video"],
                 detail=response_data["detail"],
                 address=response_data["address"],
+                created_at=product_detail.created_at,
+                updated_at=product_detail.updated_at,
             )
 
         except ValueError as e:
-            raise HttpError(400, f"잘못된 요청: {str(e)}")
+            return Response(
+                {"success": False, "message": f"잘못된 요청: {str(e)}"}, status=400
+            )
         except Exception as e:
-            raise HttpError(500, f"데이터 저장 중 오류가 발생했습니다: {str(e)}")
+            return Response(
+                {
+                    "success": False,
+                    "message": f"데이터 저장 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
 
     # 매물 수정
     @staticmethod
@@ -152,16 +170,27 @@ class ProductService:
         video: Optional[UploadedFile],
     ):
         if not user.is_authenticated:
-            raise HttpError(401, "로그인이 필요합니다.")
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
 
         try:
             # 매물 존재 여부와 권한 체크를 분리
             try:
                 product_detail = ProductDetail.objects.get(id=product_id)
                 if product_detail.user != user:
-                    raise HttpError(403, "해당 매물을 수정할 권한이 없습니다.")
+                    return Response(
+                        {
+                            "success": False,
+                            "message": "해당 매물을 수정할 권한이 없습니다.",
+                        },
+                        status=403,
+                    )
             except ProductDetail.DoesNotExist:
-                raise HttpError(404, "매물을 찾을 수 없습니다.")
+                return Response(
+                    {"success": False, "message": "매물을 찾을 수 없습니다."},
+                    status=404,
+                )
 
             with transaction.atomic():
                 # 주소 정보 업데이트
@@ -266,9 +295,205 @@ class ProductService:
                     video=response_data["video"],
                     detail=response_data["detail"],
                     address=response_data["address"],
+                    created_at=product_detail.created_at,
+                    updated_at=product_detail.updated_at,
                 )
 
         except ValueError as e:
-            raise HttpError(400, f"잘못된 요청: {str(e)}")
+            return Response(
+                {"success": False, "message": f"잘못된 요청: {str(e)}"}, status=400
+            )
         except Exception as e:
-            raise HttpError(500, f"데이터 수정 중 오류가 발생했습니다: {str(e)}")
+            return Response(
+                {
+                    "success": False,
+                    "message": f"데이터 수정 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
+
+    # 매물 찜하기/취소 서비스
+    @staticmethod
+    def toggle_like_product(user: User, product_id: int):
+        if not user.is_authenticated:
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
+
+        try:
+            product = ProductDetail.objects.get(id=product_id)
+
+            # 이미 찜한 경우 -> 찜하기 취소
+            if product.likes.filter(id=user.id).exists():
+                product.likes.remove(user)
+                is_liked = False
+                message = "찜하기가 취소되었습니다."
+                created_at = None
+            # 찜하지 않은 경우 -> 찜하기
+            else:
+                product.likes.add(user)
+                is_liked = True
+                message = "찜하기가 완료되었습니다."
+                like_obj = ProductLikes.objects.get(user=user, product=product)
+                created_at = like_obj.created_at
+
+            return ProductLikeResponseSchema(
+                success=True,
+                message=message,
+                is_liked=is_liked,
+                created_at=created_at,
+            )
+
+        except ProductDetail.DoesNotExist:
+            return Response(
+                {"success": False, "message": "매물을 찾을 수 없습니다."}, status=404
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"찜하기 처리 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
+
+    # 사용자가 찜한 매물 목록 조회
+    @staticmethod
+    def mylist_like_products(user):
+        if not user.is_authenticated:
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
+
+        try:
+            liked_products = (
+                ProductLikes.objects.filter(user=user)
+                .select_related("product", "product__address")
+                .prefetch_related("product__product_images")
+                .order_by("-created_at")
+            )
+
+            # 찜한 매물이 없는 경우도 정상 응답
+            if not liked_products.exists():
+                return Response(
+                    {
+                        "success": True,
+                        "message": "찜한 매물이 없습니다.",
+                        "total_count": 0,
+                        "products": [],
+                    },
+                    status=200,
+                )
+
+            products_data = []
+            for like in liked_products:
+                # 첫 번째 이미지를 가져오기
+                first_image = like.product.product_images.first()
+                image_url = first_image.img_url if first_image else None
+
+                product_data = UserLikedProductsSchema(
+                    product_id=like.product.id,
+                    pro_title=like.product.pro_title,
+                    pro_price=like.product.pro_price,
+                    pro_address=like.product.address.add_new,
+                    pro_type=like.product.pro_type,
+                    pro_supply_a=like.product.pro_supply_a,
+                    image_url=image_url,
+                    created_at=like.created_at,
+                )
+                products_data.append(product_data)
+
+            return UserLikedProductsResponseSchema(
+                success=True,
+                message="찜한 매물 목록을 성공적으로 조회했습니다.",
+                total_count=len(products_data),
+                products=products_data,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"찜한 매물 목록 조회 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
+
+    @staticmethod
+    # 사용자가 등록한 매물 목록 조회
+    def mylist_products(user):
+        if not user.is_authenticated:
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
+
+        try:
+            registered_products = (
+                ProductDetail.objects.filter(user=user)
+                .select_related("address", "video")
+                .prefetch_related("product_images")
+                .order_by("-created_at")
+            )
+
+            # 등록한 매물이 없는 경우도 정상 응답
+            if not registered_products.exists():
+                return Response(
+                    {
+                        "success": True,
+                        "message": "등록한 매물이 없습니다.",
+                        "total_count": 0,
+                        "products": [],
+                    },
+                    status=200,
+                )
+
+            products_data = []
+            for product in registered_products:
+                product_data = ProductDetailResponseSchema(
+                    product_id=product.id,
+                    images=[
+                        str(img.img_url.url) for img in product.product_images.all()
+                    ],
+                    video=str(product.video.video_url.url) if product.video else None,
+                    detail=ProductDetailSchema(
+                        pro_title=product.pro_title,
+                        pro_price=product.pro_price,
+                        management_cost=product.management_cost,
+                        pro_supply_a=product.pro_supply_a,
+                        pro_site_a=product.pro_site_a,
+                        pro_heat=product.pro_heat,
+                        pro_type=product.pro_type,
+                        pro_floor=product.pro_floor,
+                        pro_rooms=product.pro_rooms,
+                        pro_bathrooms=product.pro_bathrooms,
+                        pro_construction_year=product.pro_construction_year,
+                        description=product.description,
+                        sale=product.sale,
+                    ),
+                    address=AddressSchema(
+                        add_new=product.address.add_new,
+                        add_old=product.address.add_old,
+                        latitude=float(product.address.latitude),
+                        longitude=float(product.address.longitude),
+                    ),
+                    created_at=product.created_at,
+                    updated_at=product.updated_at,
+                )
+                products_data.append(product_data)
+
+            # success와 message는 전체 응답에 대해 한 번만 포함
+            return UserProductsResponseSchema(
+                success=True,
+                message="등록한 매물 목록을 성공적으로 조회했습니다.",
+                total_count=len(products_data),
+                products=products_data,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"매물 목록 조회 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )

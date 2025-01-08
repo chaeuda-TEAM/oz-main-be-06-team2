@@ -12,13 +12,16 @@ User = get_user_model()
 
 class SocialLoginService:
     @staticmethod
-    def create_or_get_user(email: str, username: str, social_type: str) -> User:
+    def create_or_get_user(
+        email: str, username: str, social_type: str, phone_number: str
+    ) -> User:
         user, created = User.objects.get_or_create(
             email=email,
             defaults={
                 "username": username,
                 "is_email_verified": True,
                 "is_social_login": True,
+                "phone_number": phone_number,
             },
         )
 
@@ -110,7 +113,7 @@ class GoogleAuthService:
             raise HttpError(400, "No email in user info")
 
         user = SocialLoginService.create_or_get_user(
-            email=email, username=username, social_type="google"
+            email=email, username=username, social_type="google", phone_number=None
         )
         refresh = RefreshToken.for_user(user)
 
@@ -176,6 +179,7 @@ class KakaoAuthService:
         }
 
         user_info_resp = requests.get(user_info_url, headers=headers)
+
         if user_info_resp.status_code != 200:
             raise HttpError(400, "카카오에서 사용자 정보를 가져오는데 실패했습니다")
 
@@ -191,7 +195,7 @@ class KakaoAuthService:
         username = kakao_account.get("profile", {}).get("nickname", "")
 
         user = SocialLoginService.create_or_get_user(
-            email=email, username=username, social_type="kakao"
+            email=email, username=username, social_type="kakao", phone_number=None
         )
         refresh = RefreshToken.for_user(user)
 
@@ -272,9 +276,15 @@ class NaverAuthService:
             raise HttpError(400, "이메일 정보가 없습니다")
 
         username = response.get("name", "")
+        phone_number = response.get("mobile", "")  # 네이버에서 제공하는 전화번호
+
+        phone_number = phone_number.replace("-", "")
 
         user = SocialLoginService.create_or_get_user(
-            email=email, username=username, social_type="naver"
+            email=email,
+            username=username,
+            social_type="naver",
+            phone_number=phone_number,
         )
         refresh = RefreshToken.for_user(user)
 
@@ -285,6 +295,7 @@ class NaverAuthService:
             "user": {
                 "email": user.email,
                 "username": user.username,
+                "phone_number": user.phone_number,
                 "is_active": user.is_active,
                 "is_email_verified": user.is_email_verified,
                 "is_social_login": user.is_social_login,
