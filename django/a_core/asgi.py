@@ -2,7 +2,7 @@ import os
 
 import django
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "a_core.settings.dev-aws-aec")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "a_core.settings.product_asgi")
 django.setup()
 import a_chat.routing
 from a_core.db import close_db, init_db
