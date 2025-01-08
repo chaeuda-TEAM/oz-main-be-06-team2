@@ -38,7 +38,7 @@ REDIS_PORT = 6379
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
+        "LOCATION": f"rediss://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "CONNECTION_POOL_CLASS": "redis.ConnectionPool",
@@ -47,12 +47,11 @@ CACHES = {
             "SOCKET_CONNECT_TIMEOUT": 5,
             "SOCKET_TIMEOUT": 5,
             "SOCKET_KEEPALIVE": True,
-            "SOCKET_KEEPALIVE_OPTIONS": {
-                "TCP_KEEPIDLE": 60,
-                "TCP_KEEPINTVL": 30,
-                "TCP_KEEPCNT": 3,
+            "CONNECTION_POOL_KWARGS": {
+                "ssl": True,
+                "ssl_cert_reqs": None,
+                "ssl_ca_certs": None,
             },
-            "CONNECTION_POOL_KWARGS": {"ssl_cert_reqs": None},
         },
         "KEY_PREFIX": "prod",
     }
@@ -70,9 +69,10 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [(REDIS_HOST, REDIS_PORT)],
+            "hosts": [f"rediss://{REDIS_HOST}:{REDIS_PORT}/0"],
             "capacity": 1500,
             "expiry": 10,
+            "ssl_cert_reqs": None,
         },
     },
 }
