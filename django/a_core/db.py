@@ -41,7 +41,7 @@ async def close_db():
 async def execute_query(query: str, *args):
     try:
         async with db_pool.acquire() as conn:
-            return await conn.execute(query, *args)
+            return await conn.fetch(query, *args)
     except (
         asyncpg.exceptions.ConnectionDoesNotExistError,
         asyncpg.exceptions.ConnectionFailureError,

@@ -1,13 +1,15 @@
 import os
 
+import django
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "a_core.settings.dev-aws-aec")
+django.setup()
 import a_chat.routing
 from a_core.db import close_db, init_db
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 
 from django.core.asgi import get_asgi_application
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "a_core.settings.dev-aws-aec")
 
 
 async def lifespan(scope, receive, send):
