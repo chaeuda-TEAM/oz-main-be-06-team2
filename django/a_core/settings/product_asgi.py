@@ -46,6 +46,13 @@ CACHES = {
             "RETRY_ON_TIMEOUT": True,
             "SOCKET_CONNECT_TIMEOUT": 5,
             "SOCKET_TIMEOUT": 5,
+            "SOCKET_KEEPALIVE": True,
+            "SOCKET_KEEPALIVE_OPTIONS": {
+                "TCP_KEEPIDLE": 60,
+                "TCP_KEEPINTVL": 30,
+                "TCP_KEEPCNT": 3,
+            },
+            "CONNECTION_POOL_KWARGS": {"ssl_cert_reqs": None},
         },
         "KEY_PREFIX": "prod",
     }
