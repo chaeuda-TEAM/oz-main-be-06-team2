@@ -38,20 +38,21 @@ REDIS_PORT = 6379
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": [
-            f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
-        ],
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "CONNECTION_POOL_CLASS": "redis.ConnectionPool",
-            "MAX_CONNECTIONS": 100,
+            "CLIENT_CLASS": "django_redis.client.HerdClient",
             "RETRY_ON_TIMEOUT": True,
+            "MAX_CONNECTIONS": 100,
             "SOCKET_CONNECT_TIMEOUT": 5,
             "SOCKET_TIMEOUT": 5,
-            "SOCKET_KEEPALIVE": True,
-            "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",
             "CONNECTION_POOL_KWARGS": {
-                "decode_responses": True,
+                "max_connections": 100,
+                "retry_on_timeout": True,
+                "socket_keepalive": True,
+            },
+            "CLUSTER": {
+                "startup_nodes": [{"host": REDIS_HOST, "port": REDIS_PORT}],
+                "skip_full_coverage_check": True,
             },
         },
         "KEY_PREFIX": "prod",
@@ -71,11 +72,10 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [f"redis://{REDIS_HOST}:{REDIS_PORT}/0"],
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
             "capacity": 1500,
             "expiry": 10,
             "prefix": "asgi:",
-            "symmetric_encryption_keys": [SECRET_KEY],
         },
     },
 }
