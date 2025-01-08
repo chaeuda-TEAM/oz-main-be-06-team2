@@ -61,15 +61,16 @@ CACHE_TTL = 60 * 5  # 5분
 
 # Channels 설정
 ASGI_APPLICATION = "a_core.asgi.application"
-
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [(REDIS_HOST, REDIS_PORT)],
+            "hosts": [f"redis://{REDIS_HOST}:{REDIS_PORT}/0"],
             "capacity": 1500,
             "expiry": 10,
             "prefix": "asgi:",
+            "symmetric_encryption_keys": [SECRET_KEY],
+            "cluster_mode": True,  # 클러스터 모드 활성화
         },
     },
 }
