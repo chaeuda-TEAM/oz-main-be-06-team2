@@ -118,3 +118,23 @@ class UserLikedProductsResponseSchema(Schema):
     message: str = Field(..., description="응답 메시지")
     total_count: int = Field(..., description="전체 찜한 매물 수")
     products: list[UserLikedProductsSchema] = Field(..., description="찜한 매물 목록")
+
+
+# 매물 상세 정보만을 위한 새로운 스키마
+class ProductDetailResponseSchema(Schema):
+    product_id: int
+    images: list[str]
+    video: Optional[str] = None
+    detail: ProductDetailSchema
+    address: AddressSchema
+    created_at: datetime = Field(..., description="등록일")
+    updated_at: datetime = Field(..., description="수정일")
+
+
+class UserProductsResponseSchema(Schema):
+    success: bool = Field(..., description="요청 처리 성공 여부")
+    message: str = Field(..., description="응답 메시지")
+    total_count: int = Field(..., description="전체 등록 매물 수")
+    products: list[ProductDetailResponseSchema] = Field(
+        ..., description="등록한 매물 목록"
+    )

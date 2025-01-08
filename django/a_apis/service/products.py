@@ -10,12 +10,16 @@ from a_apis.models.products import (
     ProductVideo,
 )
 from a_apis.schema.products import (
+    AddressSchema,
     ProductAllResponseSchema,
     ProductAllSchema,
+    ProductDetailResponseSchema,
+    ProductDetailSchema,
     ProductLikeResponseSchema,
     ProductUpdateResponseSchema,
     UserLikedProductsResponseSchema,
     UserLikedProductsSchema,
+    UserProductsResponseSchema,
 )
 from dotenv import load_dotenv
 from ninja.errors import HttpError
@@ -378,7 +382,7 @@ class ProductService:
                         "total_count": 0,
                         "products": [],
                     },
-                    status=400,
+                    status=200,
                 )
 
             products_data = []
@@ -411,6 +415,85 @@ class ProductService:
                 {
                     "success": False,
                     "message": f"찜한 매물 목록 조회 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
+
+    @staticmethod
+    # 사용자가 등록한 매물 목록 조회
+    def mylist_products(user):
+        if not user.is_authenticated:
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
+
+        try:
+            registered_products = (
+                ProductDetail.objects.filter(user=user)
+                .select_related("address", "video")
+                .prefetch_related("product_images")
+                .order_by("-created_at")
+            )
+
+            # 등록한 매물이 없는 경우도 정상 응답
+            if not registered_products.exists():
+                return Response(
+                    {
+                        "success": True,
+                        "message": "등록한 매물이 없습니다.",
+                        "total_count": 0,
+                        "products": [],
+                    },
+                    status=200,
+                )
+
+            products_data = []
+            for product in registered_products:
+                product_data = ProductDetailResponseSchema(
+                    product_id=product.id,
+                    images=[
+                        str(img.img_url.url) for img in product.product_images.all()
+                    ],
+                    video=str(product.video.video_url.url) if product.video else None,
+                    detail=ProductDetailSchema(
+                        pro_title=product.pro_title,
+                        pro_price=product.pro_price,
+                        management_cost=product.management_cost,
+                        pro_supply_a=product.pro_supply_a,
+                        pro_site_a=product.pro_site_a,
+                        pro_heat=product.pro_heat,
+                        pro_type=product.pro_type,
+                        pro_floor=product.pro_floor,
+                        pro_rooms=product.pro_rooms,
+                        pro_bathrooms=product.pro_bathrooms,
+                        pro_construction_year=product.pro_construction_year,
+                        description=product.description,
+                        sale=product.sale,
+                    ),
+                    address=AddressSchema(
+                        add_new=product.address.add_new,
+                        add_old=product.address.add_old,
+                        latitude=float(product.address.latitude),
+                        longitude=float(product.address.longitude),
+                    ),
+                    created_at=product.created_at,
+                    updated_at=product.updated_at,
+                )
+                products_data.append(product_data)
+
+            # success와 message는 전체 응답에 대해 한 번만 포함
+            return UserProductsResponseSchema(
+                success=True,
+                message="등록한 매물 목록을 성공적으로 조회했습니다.",
+                total_count=len(products_data),
+                products=products_data,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"매물 목록 조회 중 오류가 발생했습니다: {str(e)}",
                 },
                 status=500,
             )
