@@ -278,6 +278,8 @@ class NaverAuthService:
         username = response.get("name", "")
         phone_number = response.get("mobile", "")  # 네이버에서 제공하는 전화번호
 
+        phone_number = phone_number.replace("-", "")
+
         user = SocialLoginService.create_or_get_user(
             email=email,
             username=username,
