@@ -43,16 +43,10 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.HerdClient",
             "RETRY_ON_TIMEOUT": True,
             "MAX_CONNECTIONS": 100,
-            "SOCKET_CONNECT_TIMEOUT": 5,
-            "SOCKET_TIMEOUT": 5,
             "CONNECTION_POOL_KWARGS": {
                 "max_connections": 100,
                 "retry_on_timeout": True,
                 "socket_keepalive": True,
-            },
-            "CLUSTER": {
-                "startup_nodes": [{"host": REDIS_HOST, "port": REDIS_PORT}],
-                "skip_full_coverage_check": True,
             },
         },
         "KEY_PREFIX": "prod",
@@ -91,6 +85,9 @@ CSRF_COOKIE_SECURE = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_DOMAIN = ".chaeuda.shop"
 CSRF_COOKIE_DOMAIN = ".chaeuda.shop"
+SECURE_HSTS_SECONDS = 31536000  # 1년
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 CORS_ALLOW_METHODS = [
     "DELETE",
