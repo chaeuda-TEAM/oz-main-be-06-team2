@@ -47,6 +47,10 @@ CACHES = {
             "SOCKET_CONNECT_TIMEOUT": 5,
             "SOCKET_TIMEOUT": 5,
             "SOCKET_KEEPALIVE": True,
+            "REDIS_CLIENT_KWARGS": {
+                "cluster": True,
+                "decode_responses": True,
+            },
         },
         "KEY_PREFIX": "prod",
     }
@@ -55,6 +59,7 @@ CACHES = {
 # 세션 설정
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
+SESSION_COOKIE_AGE = 1209600  # 2주
 CACHE_TTL = 60 * 5  # 5분
 
 # Channels 설정
@@ -64,9 +69,15 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [(REDIS_HOST, REDIS_PORT)],
+            "hosts": [f"redis://{REDIS_HOST}:{REDIS_PORT}/0"],
             "capacity": 1500,
             "expiry": 10,
+            "prefix": "asgi:",
+            "symmetric_encryption_keys": [SECRET_KEY],
+            "cluster": {
+                "startup_nodes": [{"host": REDIS_HOST, "port": REDIS_PORT}],
+                "decode_responses": True,
+            },
         },
     },
 }
