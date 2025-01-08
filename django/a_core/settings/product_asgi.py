@@ -65,12 +65,13 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [f"redis://{REDIS_HOST}:{REDIS_PORT}/0"],
+            "hosts": [
+                f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
+            ],
             "capacity": 1500,
             "expiry": 10,
             "prefix": "asgi:",
             "symmetric_encryption_keys": [SECRET_KEY],
-            "cluster_mode": True,  # 클러스터 모드 활성화
         },
     },
 }
