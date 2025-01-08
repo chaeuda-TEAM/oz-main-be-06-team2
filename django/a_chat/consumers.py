@@ -1,22 +1,27 @@
 import json
+from logging import getLogger
 from pprint import pprint
 
 import asyncpg
+from a_core.db import execute_query, init_db
 from channels.exceptions import StopConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from django.conf import settings
 
+logger = getLogger(__name__)
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
+            await init_db()
             self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
             self.room_group_name = f"chat_{self.room_id}"
 
             # 채널 레이어 연결 상태 확인
             if not self.channel_layer:
-                print("Channel layer is not available")
+                logger.error("Channel layer is not available")
                 await self.close()
                 return
 
@@ -26,7 +31,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     self.room_group_name, self.channel_name
                 )
             except Exception as e:
-                print(f"Group add error: {str(e)}")
+                logger.error(f"Group add error: {str(e)}")
                 await self.close()
                 return
 
@@ -41,20 +46,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
             )
 
         except Exception as e:
-            print(f"Connection error: {str(e)}")
+            logger.error(f"Connection error: {str(e)}")
             await self.close()
-
-    async def postgresql_db_connect(self):
-        try:
-            self.db_pool = await asyncpg.create_pool(
-                user=settings.DATABASES["default"]["USER"],
-                password=settings.DATABASES["default"]["PASSWORD"],
-                database=settings.DATABASES["default"]["NAME"],
-                host=settings.DATABASES["default"]["HOST"],
-                port=settings.DATABASES["default"]["PORT"],
-            )
-        except Exception as e:
-            print(f"Database connection error: {str(e)}")
 
     async def disconnect(self, close_code):
         try:
@@ -63,25 +56,46 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.room_group_name, self.channel_name
             )
         except Exception as e:
-            print(f"Disconnection error: {str(e)}")
+            logger.error(f"Disconnection error: {str(e)}")
         finally:
             raise StopConsumer()
 
     async def receive(self, text_data):
         try:
-            print(f"{text_data = }")
-            print(json.dumps(self.__dict__, indent=4, default=str))
             data = json.loads(text_data)
-            message = data["message"]
-            sender = data["sender"]
+            message = data.get("message")
+            sender = data.get("sender")
 
-            # 그룹으로 메시지 전송
+            if not message or not sender:
+                raise ValueError("Message and sender are required")
+
+            # SQL 인젝션 방지를 위해 execute_query 사용
+            await execute_query(
+                """
+                INSERT INTO chat_message (sender_id, chat_room_id, message, created_at, updated_at)
+                VALUES ($1, $2, $3, NOW(), NOW())
+            """,
+                int(sender),
+                int(self.room_id),
+                message,
+            )
+
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {"type": "chat_message", "message": message, "sender": sender},
             )
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON format")
+            await self.send(
+                text_data=json.dumps(
+                    {"type": "error", "message": "Invalid message format"}
+                )
+            )
+        except ValueError as e:
+            logger.error(f"Validation error: {e}")
+            await self.send(text_data=json.dumps({"type": "error", "message": str(e)}))
         except Exception as e:
-            print(f"Message receive error: {str(e)}")
+            logger.error(f"Message processing error: {e}")
             await self.send(
                 text_data=json.dumps(
                     {"type": "error", "message": "Failed to process message"}

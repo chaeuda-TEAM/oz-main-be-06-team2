@@ -1,3 +1,4 @@
+from a_apis.models.chat import ChatMessage, ChatRoom
 from a_apis.models.email_verification import EmailVerification
 from a_apis.models.products import (
     ProductAddress,
@@ -46,3 +47,15 @@ class ProductDetailAdmin(admin.ModelAdmin):
     )
     list_filter = ("pro_type", "pro_heat", "sale")
     search_fields = ("pro_title", "pro_intro")
+
+
+@admin.register(ChatRoom)
+class ChatRoomAdmin(admin.ModelAdmin):
+    list_display = ("id", "item", "seller", "buyer")
+    search_fields = ("item", "seller", "buyer")
+
+
+@admin.register(ChatMessage)
+class ChatMessageAdmin(admin.ModelAdmin):
+    list_display = ("id", "chat_room", "sender", "message")
+    search_fields = ("chat_room", "sender", "message")

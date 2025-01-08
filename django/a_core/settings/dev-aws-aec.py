@@ -64,6 +64,16 @@ DATABASES = {
     }
 }
 
+# 비동기 DB 연결을 위한 별도 설정
+ASYNC_DB_CONFIG = {
+    "user": os.getenv("DEV_AWS_RDS_USER"),
+    "password": os.getenv("DEV_AWS_RDS_PASSWORD"),
+    "database": os.getenv("DEV_AWS_RDS_NAME"),
+    "host": os.getenv("DEV_AWS_RDS_HOST"),
+    "port": os.getenv("DEV_AWS_RDS_PORT"),
+}
+
+
 # 기본 설정
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]

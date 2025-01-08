@@ -4,49 +4,58 @@ from a_apis.models.products import ProductDetail
 from a_user.models import User
 from ninja import Router
 from ninja.responses import Response
+from rest_framework_simplejwt.tokens import AccessToken
+
+from django.db.models import Q
 
 router = Router(auth=AuthBearer())
 
 
-@router.post("/chat/create/")
-def create_chat_room(request, item_id: int, buyer_id: int):
+@router.get("/chat")
+def get_chat_rooms(request):
     """
-    채팅방 생성
-    item_id: 게시물 id
-    buyer_id: 구매자 id
+    유저가 접속해있는 채팅방 리스트
     """
     try:
-        item = ProductDetail.objects.get(id=item_id)
-    except ProductDetail.DoesNotExist:
-        return Response({"error": "게시물이 없습니다"}, status=404)
+        user = request.auth
+        if not user:
+            return Response(
+                status=400,
+                data={
+                    "success": False,
+                    "message": "인증되지 않은 사용자입니다.",
+                },
+            )
 
-    buyer = User.objects.get(id=buyer_id)
-    chat_room, created = ChatRoom.objects.get_or_create(
-        item=item, seller=item.user, buyer=buyer
-    )
-    return {"chat_room_id": chat_room.id, "created": created}
-
-
-@router.get("/chat/{chat_room_id}/messages/")
-def get_chat_messages(request, chat_room_id: int):
-    messages = ChatMessage.objects.filter(chat_room_id=chat_room_id).order_by(
-        "created_at"
-    )
-    return [
-        {
-            "sender": msg.sender.username,
-            "message": msg.message,
-            "sent_at": msg.created_at,
-        }
-        for msg in messages
-    ]
-
-
-@router.post("/chat/{chat_room_id}/send/")
-def send_message(request, chat_room_id: int, sender_id: int, message: str):
-    chat_room = ChatRoom.objects.get(id=chat_room_id)
-    sender = User.objects.get(id=sender_id)
-    msg = ChatMessage.objects.create(
-        chat_room=chat_room, sender=sender, message=message
-    )
-    return {"message_id": msg.id, "sent_at": msg.created_at}
+        access_token = AccessToken(user)
+        user_id = access_token["user_id"]
+        user = User.objects.get(id=user_id)
+        chat_rooms = ChatRoom.objects.filter(Q(seller=user) | Q(buyer=user))
+        if not chat_rooms:
+            return Response(
+                status=400,
+                data={
+                    "success": False,
+                    "message": "채팅방이 없습니다.",
+                },
+            )
+        return Response(
+            status=200,
+            data={
+                "chat_rooms": [
+                    {
+                        "id": room.id,
+                        "product_id": room.item.id,
+                        "product_title": room.item.pro_title,
+                        "seller": room.seller.username,
+                        "buyer": room.buyer.username,
+                    }
+                    for room in chat_rooms
+                ],
+            },
+        )
+    except Exception as e:
+        return Response(
+            status=500,
+            data={"success": False, "message": str(e)},
+        )
