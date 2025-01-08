@@ -18,11 +18,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.75'
-          memory: 128M
+          cpus: '0.50'
+          memory: 512M
         reservations:
           cpus: '0.25'
-          memory: 128M
+          memory: 256M
 
   nginx:
     image: nginx:1.21-alpine
