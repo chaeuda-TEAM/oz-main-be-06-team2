@@ -6,12 +6,12 @@ from django.db import models
 
 class User(AbstractUser, CommonModel):
     email = models.EmailField(unique=True)
-    phone_number = models.CharField(max_length=20)
+    phone_number = models.CharField(max_length=20, null=True, blank=True)
     is_email_verified = models.BooleanField(default=False)
     is_social_login = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["username", "phone_number"]
+    REQUIRED_FIELDS = ["username"]
 
     class Meta:
         db_table = "users"
