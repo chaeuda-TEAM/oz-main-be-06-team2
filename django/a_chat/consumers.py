@@ -1,19 +1,14 @@
 import json
 from logging import getLogger
-from pprint import pprint
 
-import asyncpg
 import jwt
 from a_core.db import execute_query, init_db
 from channels.exceptions import StopConsumer
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from django.conf import settings
-from django.contrib.auth import get_user_model
 
 logger = getLogger(__name__)
-
-User = get_user_model()
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
