@@ -6,13 +6,10 @@ from django.db import models
 
 
 class ProductAddress(CommonModel):
-    id = models.BigAutoField(primary_key=True, verbose_name="매물주소 ID")
-    add_new = models.CharField(max_length=255, verbose_name="도로명주소")
-    add_old = models.CharField(max_length=255, verbose_name="구주소")
-    latitude = models.DecimalField(max_digits=10, decimal_places=6, verbose_name="위도")
-    longitude = models.DecimalField(
-        max_digits=10, decimal_places=6, verbose_name="경도"
-    )
+    add_new = models.CharField(max_length=200, verbose_name="도로명주소")
+    add_old = models.CharField(max_length=200, verbose_name="구주소")
+    latitude = models.FloatField(verbose_name="위도")
+    longitude = models.FloatField(verbose_name="경도")
 
     class Meta:
         db_table = "product_address"
