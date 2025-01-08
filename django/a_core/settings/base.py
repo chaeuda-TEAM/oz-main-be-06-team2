@@ -86,7 +86,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
-    # "a_apis.middleware.ProcessPUTPatchMiddleware",  # PUT, PATCH 요청 처리 미들웨어
+    "a_apis.middleware.ProcessPUTPatchMiddleware",  # PUT, PATCH 요청 처리 미들웨어
 ]
 
 REST_FRAMEWORK = {
