@@ -48,9 +48,7 @@ CACHES = {
             "SOCKET_TIMEOUT": 5,
             "SOCKET_KEEPALIVE": True,
             "CONNECTION_POOL_KWARGS": {
-                "ssl": True,
                 "ssl_cert_reqs": None,
-                "ssl_ca_certs": None,
             },
         },
         "KEY_PREFIX": "prod",
