@@ -11,9 +11,6 @@ class ChatRoom(CommonModel):
     item = models.ForeignKey(
         ProductDetail, related_name="chat_rooms", on_delete=models.CASCADE
     )
-    seller = models.ForeignKey(
-        User, related_name="chat_rooms_as_seller", on_delete=models.CASCADE
-    )
     buyer = models.ForeignKey(
         User, related_name="chat_rooms_as_buyer", on_delete=models.CASCADE
     )
@@ -23,10 +20,10 @@ class ChatRoom(CommonModel):
         db_table = "chat_room"
         verbose_name = "채팅방"
         verbose_name_plural = "채팅방"
-        unique_together = ("item", "seller", "buyer")
+        unique_together = ("item", "buyer")
 
     def __str__(self):
-        return f"ChatRoom for {self.item.pro_title} ({self.seller.username} ↔ {self.buyer.username})"
+        return f"ChatRoom for {self.item.pro_title} ({self.item.user.username} ↔ {self.buyer.username})"
 
 
 class ChatMessage(CommonModel):
