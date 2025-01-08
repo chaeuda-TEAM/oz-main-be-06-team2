@@ -51,11 +51,23 @@ class ProductDetailAdmin(admin.ModelAdmin):
 
 @admin.register(ChatRoom)
 class ChatRoomAdmin(admin.ModelAdmin):
-    list_display = ("id", "item", "seller", "buyer")
-    search_fields = ("item", "seller", "buyer")
+    list_display = ("id", "item", "get_seller", "get_buyer", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("item__pro_title", "item__user__email", "buyer__email")
+
+    def get_seller(self, obj):
+        return obj.item.user.email if obj.item.user else "-"
+
+    get_seller.short_description = "판매자"
+
+    def get_buyer(self, obj):
+        return obj.buyer.email if obj.buyer else "-"
+
+    get_buyer.short_description = "구매자"
 
 
 @admin.register(ChatMessage)
 class ChatMessageAdmin(admin.ModelAdmin):
-    list_display = ("id", "chat_room", "sender", "message")
-    search_fields = ("chat_room", "sender", "message")
+    list_display = ("id", "chat_room", "sender", "message", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("message", "sender__email")
