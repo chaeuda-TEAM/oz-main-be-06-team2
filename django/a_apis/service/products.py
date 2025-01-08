@@ -139,6 +139,8 @@ class ProductService:
                 video=response_data["video"],
                 detail=response_data["detail"],
                 address=response_data["address"],
+                created_at=product_detail.created_at,
+                updated_at=product_detail.updated_at,
             )
 
         except ValueError as e:
@@ -289,6 +291,8 @@ class ProductService:
                     video=response_data["video"],
                     detail=response_data["detail"],
                     address=response_data["address"],
+                    created_at=product_detail.created_at,
+                    updated_at=product_detail.updated_at,
                 )
 
         except ValueError as e:
@@ -367,11 +371,14 @@ class ProductService:
 
             # 찜한 매물이 없는 경우도 정상 응답
             if not liked_products.exists():
-                return UserLikedProductsResponseSchema(
-                    success=True,
-                    message="찜한 매물이 없습니다.",
-                    total_count=0,
-                    products=[],
+                return Response(
+                    {
+                        "success": True,
+                        "message": "찜한 매물이 없습니다.",
+                        "total_count": 0,
+                        "products": [],
+                    },
+                    status=400,
                 )
 
             products_data = []

@@ -75,6 +75,8 @@ class ProductAllResponseSchema(Schema):
     video: Optional[str] = None
     detail: ProductDetailSchema
     address: AddressSchema
+    created_at: datetime = Field(..., description="등록일")
+    updated_at: datetime = Field(..., description="수정일")
 
 
 class ProductUpdateResponseSchema(Schema):
@@ -85,6 +87,8 @@ class ProductUpdateResponseSchema(Schema):
     video: Optional[str] = None
     detail: ProductDetailSchema
     address: AddressSchema
+    created_at: datetime = Field(..., description="등록일")
+    updated_at: datetime = Field(..., description="수정일")
 
 
 class ProductLikeResponseSchema(Schema):
