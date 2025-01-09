@@ -113,7 +113,7 @@ class GoogleAuthService:
             raise HttpError(400, "No email in user info")
 
         user = SocialLoginService.create_or_get_user(
-            email=email, username=username, social_type="google", phone_number=None
+            email=email, username=username, social_type="google", phone_number=""
         )
         refresh = RefreshToken.for_user(user)
 
