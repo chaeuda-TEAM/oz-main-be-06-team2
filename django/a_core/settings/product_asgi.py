@@ -59,9 +59,8 @@ CACHES = {
     }
 }
 
-# 세션 설정 - 파일 기반으로 변경
-SESSION_ENGINE = "django.contrib.sessions.backends.file"
-SESSION_FILE_PATH = "/tmp/django_sessions"
+# 세션 설정 - DB 기반으로 변경
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 1209600  # 2주
 
 # Channels 설정
