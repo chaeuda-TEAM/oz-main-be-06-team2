@@ -41,8 +41,7 @@ CACHES = {
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",  # 클러스터 모드 추가
-            "CONNECTION_POOL_CLASS": "redis.cluster.ClusterConnectionPool",  # 클러스터 풀 추가
+            "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",
             "RETRY_ON_TIMEOUT": True,
             "MAX_CONNECTIONS": 100,
             "CONNECTION_POOL_KWARGS": {
