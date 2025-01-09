@@ -14,7 +14,7 @@ services:
     networks:
       - backend-network
     environment:
-      - DJANGO_SETTINGS_MODULE=a_core.settings.product_asgi
+      - DJANGO_SETTINGS_MODULE=a_core.settings.product
     deploy:
       resources:
         limits:

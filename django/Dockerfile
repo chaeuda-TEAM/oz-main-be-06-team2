@@ -23,9 +23,6 @@ COPY pyproject.toml poetry.lock /app/
 # Configure Poetry to not create a virtual environment
 RUN poetry config virtualenvs.create false
 
-# uvicorn worker를 위한 추가 패키지 설치
-RUN poetry add uvicorn[standard]
-
 # Install Python dependencies
 RUN poetry install --no-interaction --no-ansi
 
@@ -33,25 +30,18 @@ RUN poetry install --no-interaction --no-ansi
 COPY django/ /app/
 
 # Set environment variable for Django settings
-ENV DJANGO_SETTINGS_MODULE=a_core.settings.product_asgi
+ENV DJANGO_SETTINGS_MODULE=a_core.settings.product
 
 # Create directory for static files
 RUN mkdir -p /app/static
 
 # Run migrations and collect static files
-RUN python manage.py makemigrations --noinput --settings=a_core.settings.product_asgi && \
-    python manage.py migrate --noinput --settings=a_core.settings.product_asgi && \
-    python manage.py collectstatic --noinput --settings=a_core.settings.product_asgi
+RUN python manage.py makemigrations --noinput --settings=a_core.settings.product && \
+    python manage.py migrate --noinput --settings=a_core.settings.product && \
+    python manage.py collectstatic --noinput --settings=a_core.settings.product
 
 # Expose port 8000
 EXPOSE 8000
 
 # Define the default command to run the application
-CMD ["gunicorn", "a_core.asgi:application", \
-     "-k", "uvicorn.workers.UvicornWorker", \
-     "--workers", "2", \
-     "--worker-connections", "1000", \
-     "--timeout", "300", \
-     "--bind", "0.0.0.0:8000", \
-     "--max-requests", "1000", \
-     "--max-requests-jitter", "50"] 
+CMD ["gunicorn", "a_core.wsgi:application", "--bind", "0.0.0.0:8000"] 
