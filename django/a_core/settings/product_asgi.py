@@ -42,18 +42,31 @@ REDIS_PORT = 6379
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
+        # LOCATION은 "redis-cluster" 또는 "rediscluster://..." 식 임의 문자열로 두면 됩니다.
+        # (실제 연결은 STARTUP_NODES 통해 이루어집니다.)
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",  # DefaultClient 사용
-            "CONNECTION_POOL_CLASS_KWARGS": {
-                "max_connections": 50,
+            "CLIENT_CLASS": "django_redis.client.DefaultClusterClient",
+            # HerdClient를 사용하셨다면, cluster와 호환성 문제가 생길 수 있습니다.
+            # 캐시 스탬피드 방지를 위해 HerdClient를 쓰려면, 별도의 지원 여부를 확인해야 합니다.
+            # 여기서는 cluster 대응이 잘 되는 DefaultClusterClient를 우선 사용 예시로 제시합니다.
+            # 실제 노드(또는 Configuration Endpoint) 정보
+            "STARTUP_NODES": [
+                {
+                    "host": REDIS_HOST,
+                    "port": str(REDIS_PORT),
+                }
+            ],
+            # 커넥션 관련 옵션
+            "RETRY_ON_TIMEOUT": True,
+            "MAX_CONNECTIONS": 100,
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": 100,
                 "retry_on_timeout": True,
-                "socket_timeout": 5,
-                "socket_connect_timeout": 5,
+                "socket_keepalive": True,
             },
-            "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
-            "IGNORE_EXCEPTIONS": True,  # 예외 무시 추가
         },
+        # 캐시 키 prefix
         "KEY_PREFIX": "prod",
     }
 }
@@ -78,6 +91,9 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
+            # 여기서는 단순히 single endpoint를 지정합니다.
+            # channels_redis는 'redis://' 스킴을 사용 가능하지만,
+            #   클러스터 모드를 완전 인식하진 않습니다.
             "hosts": [
                 f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
             ],
