@@ -40,24 +40,29 @@ CACHES = {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.HerdClient",
-            "RETRY_ON_TIMEOUT": True,
-            "MAX_CONNECTIONS": 100,
-            "CONNECTION_POOL_KWARGS": {
-                "max_connections": 100,
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",
+            "CONNECTION_POOL_CLASS": "redis.connection.ClusterConnection",
+            "CONNECTION_POOL_CLASS_KWARGS": {
+                "max_connections": 50,
                 "retry_on_timeout": True,
-                "socket_keepalive": True,
+                "decode_responses": True,
+            },
+            "PARSER_CLASS": "redis.connection.ClusterParser",
+            "REDIS_CLUSTER_SETTINGS": {
+                "nodes": [{"host": REDIS_HOST, "port": REDIS_PORT}],
+                "skip_full_coverage_check": True,
+                "reinitialize_steps": 10,
+                "read_from_replicas": True,
             },
         },
-        "KEY_PREFIX": "prod",
     }
 }
 
-# 세션 설정
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+# 세션 설정 - 파일 기반으로 변경
+SESSION_ENGINE = "django.contrib.sessions.backends.file"
+SESSION_FILE_PATH = "/tmp/django_sessions"
 SESSION_COOKIE_AGE = 1209600  # 2주
-CACHE_TTL = 60 * 5  # 5분
 
 # Channels 설정
 ASGI_APPLICATION = "a_core.asgi.application"
@@ -65,9 +70,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [
-                f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
-            ],
+            "hosts": [f"redis://{REDIS_HOST}:{REDIS_PORT}/0"],
             "capacity": 1500,
             "expiry": 10,
             "prefix": "asgi:",
