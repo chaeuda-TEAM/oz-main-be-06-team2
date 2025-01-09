@@ -13,11 +13,14 @@ from a_apis.schema.products import (
     MyProductsSchema,
     MyProductsSchemaResponseSchema,
     ProductAllResponseSchema,
+    ProductDetailAllResponseSchema,
+    ProductInformationResponseSchema,
     ProductLikeResponseSchema,
     ProductRequestBodySchema,
     ProductResponseDetailSchema,
     ProductUpdateResponseDetailSchema,
     ProductUpdateResponseSchema,
+    UserDetailSchema,
     UserLikedProductsResponseSchema,
     UserLikedProductsSchema,
 )
@@ -51,6 +54,9 @@ class ProductService:
             )
 
         try:
+            if len(images) > 10:
+                raise ValueError("최대 10장의 이미지만 업로드할 수 있습니다.")
+
             # ProductAddress 객체 생성
             product_address = ProductAddress.objects.create(
                 add_new=data.add_new,
@@ -86,9 +92,6 @@ class ProductService:
                 video=product_video,  # 동영상 필드 설정
             )
 
-            if len(images) > 10:
-                raise ValueError("최대 10장의 이미지만 업로드할 수 있습니다.")
-
             image_urls = []
             for image in images:
                 # S3에 파일 업로드
@@ -108,6 +111,9 @@ class ProductService:
                 saved_path = default_storage.save(file_path, video)
                 video_url = default_storage.url(saved_path)
                 product_video = ProductVideo.objects.create(video_url=video_url)
+
+            # 매물 생성 직후에는 무조건 false (생성한 사용자도 아직 찜하지 않음)
+            is_liked = False
 
             response_data = {
                 "images": image_urls,
@@ -159,6 +165,7 @@ class ProductService:
                     add_old=product_detail.address.add_old,
                     latitude=float(product_detail.address.latitude),
                     longitude=float(product_detail.address.longitude),
+                    is_liked=is_liked,
                     created_at=product_detail.created_at,
                     updated_at=product_detail.updated_at,
                 ),
@@ -265,6 +272,13 @@ class ProductService:
                             product_detail=product_detail, img_url=image_url
                         )
 
+                # 현재 로그인한 사용자의 찜 여부 확인
+                is_liked = (
+                    product_detail.likes.filter(id=user.id).exists()
+                    if user.is_authenticated
+                    else False
+                )
+
                 # response_data 구성
                 response_data = {
                     "images": (
@@ -343,6 +357,7 @@ class ProductService:
                         add_old=product_detail.address.add_old,
                         latitude=float(product_detail.address.latitude),
                         longitude=float(product_detail.address.longitude),
+                        is_liked=is_liked,
                         created_at=product_detail.created_at,
                         updated_at=product_detail.updated_at,
                     ),
@@ -440,6 +455,7 @@ class ProductService:
                 first_image = like.product.product_images.first()
                 image_url = first_image.img_url if first_image else None
 
+                # 찜 목록이므로 무조건 True (자신이 찜한 목록)
                 product_data = UserLikedProductsSchema(
                     product_id=like.product.id,
                     pro_title=like.product.pro_title,
@@ -448,6 +464,7 @@ class ProductService:
                     pro_type=like.product.pro_type,
                     pro_supply_a=like.product.pro_supply_a,
                     images=image_url,
+                    is_liked=True,  # 본인의 찜 목록이므로 항상 True
                     created_at=like.created_at,
                 )
                 products_data.append(product_data)
@@ -501,6 +518,13 @@ class ProductService:
                 first_image = product_detail.product_images.first()
                 image_url = first_image.img_url if first_image else None
 
+                # 현재 로그인한 사용자(본인)의 찜 여부 확인
+                is_liked = (
+                    product_detail.likes.filter(id=user.id).exists()
+                    if user.is_authenticated
+                    else False
+                )
+
                 product_data = MyProductsSchema(
                     product_id=product_detail.id,
                     pro_title=product_detail.pro_title,
@@ -509,6 +533,7 @@ class ProductService:
                     pro_supply_a=float(product_detail.pro_supply_a),
                     add_new=product_detail.address.add_new,
                     images=image_url,
+                    is_liked=is_liked,
                     created_at=product_detail.created_at,
                 )
                 products_data.append(product_data)
@@ -525,6 +550,83 @@ class ProductService:
                 {
                     "success": False,
                     "message": f"매물 목록 조회 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
+
+    @staticmethod
+    # 매물 상세 조회
+    def get_product_detail(user, product_id: int):
+        try:
+            print(
+                f"Service user: {user}, is_authenticated: {user.is_authenticated if user else False}"
+            )
+            # select_related와 prefetch_related를 사용하여 쿼리 최적화
+            product = (
+                ProductDetail.objects.select_related("user", "address", "video")
+                .prefetch_related("product_images", "likes")  # likes 추가
+                .get(id=product_id)
+            )
+
+            # 이미지 URL 리스트 생성
+            image_urls = [img.img_url.url for img in product.product_images.all()]
+
+            # 비디오 URL
+            video_url = product.video.video_url.url if product.video else None
+
+            # 찜 여부 체크 로직 개선
+            is_liked = False
+            if user and user.is_authenticated:
+                # 직접 ProductLikes 테이블 조회
+                is_liked = ProductLikes.objects.filter(
+                    user=user, product=product
+                ).exists()
+
+            # response 구성 부분은 동일
+            return ProductDetailAllResponseSchema(
+                success=True,
+                message="매물 상세 정보를 성공적으로 조회했습니다.",
+                product=ProductInformationResponseSchema(
+                    product_id=product.id,
+                    user=UserDetailSchema(
+                        id=product.user.id,
+                        username=product.user.username,
+                        phone_number=product.user.phone_number,
+                    ),
+                    images=image_urls,
+                    video=video_url,
+                    pro_title=product.pro_title,
+                    pro_price=product.pro_price,
+                    management_cost=product.management_cost,
+                    pro_supply_a=float(product.pro_supply_a),
+                    pro_site_a=float(product.pro_site_a),
+                    pro_heat=product.pro_heat,
+                    pro_type=product.pro_type,
+                    pro_floor=product.pro_floor,
+                    description=product.description,
+                    sale=product.sale,
+                    pro_rooms=product.pro_rooms,
+                    pro_bathrooms=product.pro_bathrooms,
+                    pro_construction_year=product.pro_construction_year,
+                    add_new=product.address.add_new,
+                    add_old=product.address.add_old,
+                    latitude=float(product.address.latitude),
+                    longitude=float(product.address.longitude),
+                    is_liked=is_liked,
+                    created_at=product.created_at,
+                    updated_at=product.updated_at,
+                ),
+            )
+
+        except ProductDetail.DoesNotExist:
+            return Response(
+                {"success": False, "message": "매물을 찾을 수 없습니다."}, status=404
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"매물 상세 정보 조회 중 오류가 발생했습니다: {str(e)}",
                 },
                 status=500,
             )
