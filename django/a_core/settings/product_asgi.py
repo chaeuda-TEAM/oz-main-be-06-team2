@@ -38,16 +38,22 @@ REDIS_PORT = 6379
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
+        "LOCATION": [
+            f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
+        ],
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.HerdClient",
             "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",
-            "RETRY_ON_TIMEOUT": True,
-            "MAX_CONNECTIONS": 100,
+            "REDIS_CLUSTER_CONFIG": {
+                "startup_nodes": [
+                    {"host": REDIS_HOST, "port": REDIS_PORT},
+                ],
+                "decode_responses": True,
+                "skip_full_coverage_check": True,
+            },
             "CONNECTION_POOL_KWARGS": {
                 "max_connections": 100,
                 "retry_on_timeout": True,
-                "socket_keepalive": True,
                 "socket_connect_timeout": 5,
                 "socket_timeout": 5,
             },
