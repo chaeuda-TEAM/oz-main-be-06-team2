@@ -37,32 +37,20 @@ REDIS_PORT = 6379
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",  # Make sure the endpoint is correct
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.HerdClient",  # Or HerdClient for clusters
-            "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",
-            "REDIS_CLUSTER_OPTIONS": {
-                "startup_nodes": [
-                    {
-                        "host": REDIS_HOST,
-                        "port": REDIS_PORT,
-                    },  # Provide the cluster endpoint here
-                ],
-                "decode_responses": True,
-                "skip_full_coverage_check": True,
-                "retry_on_timeout": True,
-                "socket_connect_timeout": 5,
-                "socket_timeout": 5,
-            },
+            "CLIENT_CLASS": "django_redis.client.HerdClient",
+            "RETRY_ON_TIMEOUT": True,
+            "MAX_CONNECTIONS": 100,
             "CONNECTION_POOL_KWARGS": {
                 "max_connections": 100,
+                "retry_on_timeout": True,
+                "socket_keepalive": True,
             },
         },
         "KEY_PREFIX": "prod",
     }
 }
-
-
 # 세션 설정
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
