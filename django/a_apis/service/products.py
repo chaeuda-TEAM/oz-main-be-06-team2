@@ -10,16 +10,16 @@ from a_apis.models.products import (
     ProductVideo,
 )
 from a_apis.schema.products import (
-    AddressSchema,
+    MyProductsSchema,
+    MyProductsSchemaResponseSchema,
     ProductAllResponseSchema,
-    ProductAllSchema,
-    ProductDetailResponseSchema,
-    ProductDetailSchema,
     ProductLikeResponseSchema,
+    ProductRequestBodySchema,
+    ProductResponseDetailSchema,
+    ProductUpdateResponseDetailSchema,
     ProductUpdateResponseSchema,
     UserLikedProductsResponseSchema,
     UserLikedProductsSchema,
-    UserProductsResponseSchema,
 )
 from dotenv import load_dotenv
 from ninja.errors import HttpError
@@ -41,7 +41,7 @@ class ProductService:
     @staticmethod
     def create_product(
         user: User,
-        data: ProductAllSchema,
+        data: ProductRequestBodySchema,
         images: list[UploadedFile],
         video: Optional[UploadedFile],
     ):
@@ -53,10 +53,10 @@ class ProductService:
         try:
             # ProductAddress 객체 생성
             product_address = ProductAddress.objects.create(
-                add_new=data.address.add_new,
-                add_old=data.address.add_old,
-                latitude=data.address.latitude,
-                longitude=data.address.longitude,
+                add_new=data.add_new,
+                add_old=data.add_old,
+                latitude=data.latitude,
+                longitude=data.longitude,
             )
 
             # ProductVideo 객체 생성
@@ -67,21 +67,21 @@ class ProductService:
             # ProductDetail 객체 생성
             product_detail = ProductDetail.objects.create(
                 user=user,
-                pro_title=data.detail.pro_title,
-                pro_price=data.detail.pro_price,
-                management_cost=data.detail.management_cost,
-                pro_floor=data.detail.pro_floor,
-                description=data.detail.description,
+                pro_title=data.pro_title,
+                pro_price=data.pro_price,
+                management_cost=data.management_cost,
+                pro_floor=data.pro_floor,
+                description=data.description,
                 sale=getattr(
-                    data.detail, "sale", True
+                    data, "sale", True
                 ),  # getattr이 True를 반환해서 DB에 sale=True로 저장
-                pro_supply_a=data.detail.pro_supply_a,
-                pro_site_a=data.detail.pro_site_a,
-                pro_heat=data.detail.pro_heat,
-                pro_type=data.detail.pro_type,
-                pro_rooms=data.detail.pro_rooms,
-                pro_bathrooms=data.detail.pro_bathrooms,
-                pro_construction_year=data.detail.pro_construction_year,
+                pro_supply_a=data.pro_supply_a,
+                pro_site_a=data.pro_site_a,
+                pro_heat=data.pro_heat,
+                pro_type=data.pro_type,
+                pro_rooms=data.pro_rooms,
+                pro_bathrooms=data.pro_bathrooms,
+                pro_construction_year=data.pro_construction_year,
                 address=product_address,  # 주소 필드 설정
                 video=product_video,  # 동영상 필드 설정
             )
@@ -138,13 +138,30 @@ class ProductService:
             return ProductAllResponseSchema(
                 success=True,
                 message="성공적으로 생성되었습니다.",
-                product_id=product_detail.id,
-                images=response_data["images"],
-                video=response_data["video"],
-                detail=response_data["detail"],
-                address=response_data["address"],
-                created_at=product_detail.created_at,
-                updated_at=product_detail.updated_at,
+                product=ProductResponseDetailSchema(
+                    product_id=product_detail.id,
+                    images=image_urls,
+                    video=video_url,
+                    pro_title=product_detail.pro_title,
+                    pro_price=product_detail.pro_price,
+                    management_cost=product_detail.management_cost,
+                    pro_supply_a=float(product_detail.pro_supply_a),
+                    pro_site_a=float(product_detail.pro_site_a),
+                    pro_heat=product_detail.pro_heat,
+                    pro_type=product_detail.pro_type,
+                    pro_floor=product_detail.pro_floor,
+                    pro_rooms=product_detail.pro_rooms,
+                    pro_bathrooms=product_detail.pro_bathrooms,
+                    pro_construction_year=product_detail.pro_construction_year,
+                    description=product_detail.description,
+                    sale=product_detail.sale,
+                    add_new=product_detail.address.add_new,
+                    add_old=product_detail.address.add_old,
+                    latitude=float(product_detail.address.latitude),
+                    longitude=float(product_detail.address.longitude),
+                    created_at=product_detail.created_at,
+                    updated_at=product_detail.updated_at,
+                ),
             )
 
         except ValueError as e:
@@ -165,7 +182,7 @@ class ProductService:
     def update_product(
         user: User,
         product_id: int,
-        data: ProductAllSchema,
+        data: ProductRequestBodySchema,
         images: Optional[list[UploadedFile]],
         video: Optional[UploadedFile],
     ):
@@ -194,10 +211,10 @@ class ProductService:
 
             with transaction.atomic():
                 # 주소 정보 업데이트
-                product_detail.address.add_new = data.address.add_new
-                product_detail.address.add_old = data.address.add_old
-                product_detail.address.latitude = data.address.latitude
-                product_detail.address.longitude = data.address.longitude
+                product_detail.address.add_new = data.add_new
+                product_detail.address.add_old = data.add_old
+                product_detail.address.latitude = data.latitude
+                product_detail.address.longitude = data.longitude
                 product_detail.address.save()
 
                 # 비디오 처리 - 새 비디오가 제공된 경우에만 업데이트
@@ -214,19 +231,19 @@ class ProductService:
                         old_video.delete()
 
                 # 기본 정보 업데이트
-                product_detail.pro_title = data.detail.pro_title
-                product_detail.pro_price = data.detail.pro_price
-                product_detail.management_cost = data.detail.management_cost
-                product_detail.pro_floor = data.detail.pro_floor
-                product_detail.description = data.detail.description
-                product_detail.sale = getattr(data.detail, "sale", True)
-                product_detail.pro_supply_a = data.detail.pro_supply_a
-                product_detail.pro_site_a = data.detail.pro_site_a
-                product_detail.pro_heat = data.detail.pro_heat
-                product_detail.pro_type = data.detail.pro_type
-                product_detail.pro_rooms = data.detail.pro_rooms
-                product_detail.pro_bathrooms = data.detail.pro_bathrooms
-                product_detail.pro_construction_year = data.detail.pro_construction_year
+                product_detail.pro_title = data.pro_title
+                product_detail.pro_price = data.pro_price
+                product_detail.management_cost = data.management_cost
+                product_detail.pro_floor = data.pro_floor
+                product_detail.description = data.description
+                product_detail.sale = getattr(data, "sale", True)
+                product_detail.pro_supply_a = data.pro_supply_a
+                product_detail.pro_site_a = data.pro_site_a
+                product_detail.pro_heat = data.pro_heat
+                product_detail.pro_type = data.pro_type
+                product_detail.pro_rooms = data.pro_rooms
+                product_detail.pro_bathrooms = data.pro_bathrooms
+                product_detail.pro_construction_year = data.pro_construction_year
                 product_detail.save()
 
                 # 이미지 처리 - 새 이미지가 제공된 경우에만 업데이트
@@ -290,13 +307,45 @@ class ProductService:
                 return ProductUpdateResponseSchema(
                     success=True,
                     message="성공적으로 수정되었습니다.",
-                    product_id=product_detail.id,
-                    images=response_data["images"],
-                    video=response_data["video"],
-                    detail=response_data["detail"],
-                    address=response_data["address"],
-                    created_at=product_detail.created_at,
-                    updated_at=product_detail.updated_at,
+                    product=ProductUpdateResponseDetailSchema(
+                        product_id=product_detail.id,
+                        images=(
+                            image_urls
+                            if images
+                            else [
+                                img.img_url.url
+                                for img in product_detail.product_images.all()
+                            ]
+                        ),
+                        video=(
+                            video_url
+                            if video
+                            else (
+                                product_detail.video.video_url.url
+                                if product_detail.video
+                                else None
+                            )
+                        ),
+                        pro_title=product_detail.pro_title,
+                        pro_price=product_detail.pro_price,
+                        management_cost=product_detail.management_cost,
+                        pro_supply_a=float(product_detail.pro_supply_a),
+                        pro_site_a=float(product_detail.pro_site_a),
+                        pro_heat=product_detail.pro_heat,
+                        pro_type=product_detail.pro_type,
+                        pro_floor=product_detail.pro_floor,
+                        pro_rooms=product_detail.pro_rooms,
+                        pro_bathrooms=product_detail.pro_bathrooms,
+                        pro_construction_year=product_detail.pro_construction_year,
+                        description=product_detail.description,
+                        sale=product_detail.sale,
+                        add_new=product_detail.address.add_new,
+                        add_old=product_detail.address.add_old,
+                        latitude=float(product_detail.address.latitude),
+                        longitude=float(product_detail.address.longitude),
+                        created_at=product_detail.created_at,
+                        updated_at=product_detail.updated_at,
+                    ),
                 )
 
         except ValueError as e:
@@ -395,10 +444,10 @@ class ProductService:
                     product_id=like.product.id,
                     pro_title=like.product.pro_title,
                     pro_price=like.product.pro_price,
-                    pro_address=like.product.address.add_new,
+                    add_new=like.product.address.add_new,
                     pro_type=like.product.pro_type,
                     pro_supply_a=like.product.pro_supply_a,
-                    image_url=image_url,
+                    images=image_url,
                     created_at=like.created_at,
                 )
                 products_data.append(product_data)
@@ -430,12 +479,11 @@ class ProductService:
         try:
             registered_products = (
                 ProductDetail.objects.filter(user=user)
-                .select_related("address", "video")
+                .select_related("address")
                 .prefetch_related("product_images")
                 .order_by("-created_at")
             )
 
-            # 등록한 매물이 없는 경우도 정상 응답
             if not registered_products.exists():
                 return Response(
                     {
@@ -448,41 +496,24 @@ class ProductService:
                 )
 
             products_data = []
-            for product in registered_products:
-                product_data = ProductDetailResponseSchema(
-                    product_id=product.id,
-                    images=[
-                        str(img.img_url.url) for img in product.product_images.all()
-                    ],
-                    video=str(product.video.video_url.url) if product.video else None,
-                    detail=ProductDetailSchema(
-                        pro_title=product.pro_title,
-                        pro_price=product.pro_price,
-                        management_cost=product.management_cost,
-                        pro_supply_a=product.pro_supply_a,
-                        pro_site_a=product.pro_site_a,
-                        pro_heat=product.pro_heat,
-                        pro_type=product.pro_type,
-                        pro_floor=product.pro_floor,
-                        pro_rooms=product.pro_rooms,
-                        pro_bathrooms=product.pro_bathrooms,
-                        pro_construction_year=product.pro_construction_year,
-                        description=product.description,
-                        sale=product.sale,
-                    ),
-                    address=AddressSchema(
-                        add_new=product.address.add_new,
-                        add_old=product.address.add_old,
-                        latitude=float(product.address.latitude),
-                        longitude=float(product.address.longitude),
-                    ),
-                    created_at=product.created_at,
-                    updated_at=product.updated_at,
+            for product_detail in registered_products:
+                # 첫 번째 이미지를 가져오기
+                first_image = product_detail.product_images.first()
+                image_url = first_image.img_url if first_image else None
+
+                product_data = MyProductsSchema(
+                    product_id=product_detail.id,
+                    pro_title=product_detail.pro_title,
+                    pro_price=product_detail.pro_price,
+                    pro_type=product_detail.pro_type,
+                    pro_supply_a=float(product_detail.pro_supply_a),
+                    add_new=product_detail.address.add_new,
+                    images=image_url,
+                    created_at=product_detail.created_at,
                 )
                 products_data.append(product_data)
 
-            # success와 message는 전체 응답에 대해 한 번만 포함
-            return UserProductsResponseSchema(
+            return MyProductsSchemaResponseSchema(
                 success=True,
                 message="등록한 매물 목록을 성공적으로 조회했습니다.",
                 total_count=len(products_data),
