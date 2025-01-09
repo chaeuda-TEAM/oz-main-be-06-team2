@@ -18,7 +18,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:8000",
-    "wss://api.chaeuda.shop",  # WebSocket 보안 연결 추가
+    "ws://api.chaeuda.shop",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -42,28 +42,27 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",
-            "REDIS_CLUSTER_OPTIONS": {
-                "host": REDIS_HOST,
-                "port": REDIS_PORT,
-                "decode_responses": True,
-                "skip_full_coverage_check": True,
+            "CONNECTION_POOL_CLASS": "redis.connection.ClusterConnection",
+            "CONNECTION_POOL_CLASS_KWARGS": {
+                "max_connections": 50,
                 "retry_on_timeout": True,
-                "socket_connect_timeout": 5,
-                "socket_timeout": 5,
+                "decode_responses": True,
             },
-            "CONNECTION_POOL_KWARGS": {
-                "max_connections": 100,
+            "PARSER_CLASS": "redis.connection.ClusterParser",
+            "REDIS_CLUSTER_SETTINGS": {
+                "nodes": [{"host": REDIS_HOST, "port": REDIS_PORT}],
+                "skip_full_coverage_check": True,
+                "reinitialize_steps": 10,
+                "read_from_replicas": True,
             },
         },
-        "KEY_PREFIX": "prod",
     }
 }
 
-# 세션 설정
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+# 세션 설정 - 파일 기반으로 변경
+SESSION_ENGINE = "django.contrib.sessions.backends.file"
+SESSION_FILE_PATH = "/tmp/django_sessions"
 SESSION_COOKIE_AGE = 1209600  # 2주
-CACHE_TTL = 60 * 5  # 5분
 
 # Channels 설정
 ASGI_APPLICATION = "a_core.asgi.application"
@@ -71,12 +70,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [
-                {
-                    "host": REDIS_HOST,
-                    "port": REDIS_PORT,
-                }
-            ],
+            "hosts": [f"redis://{REDIS_HOST}:{REDIS_PORT}/0"],
             "capacity": 1500,
             "expiry": 10,
             "prefix": "asgi:",
