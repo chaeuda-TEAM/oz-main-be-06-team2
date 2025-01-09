@@ -40,7 +40,7 @@ CACHES = {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CLIENT_CLASS": "django_redis.client.HerdClient",
             "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",
             "RETRY_ON_TIMEOUT": True,
             "MAX_CONNECTIONS": 100,
