@@ -18,7 +18,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:8000",
-    "wss://api.chaeuda.shop",  # WebSocket 보안 연결 추가
+    "ws://api.chaeuda.shop",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -34,23 +34,33 @@ CSRF_TRUSTED_ORIGINS = [
 REDIS_HOST = os.getenv("AWS_ELASTICACHE_ENDPOINT")
 REDIS_PORT = 6379
 
+# 캐시 설정
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.HerdClient",
-            "RETRY_ON_TIMEOUT": True,
-            "MAX_CONNECTIONS": 100,
-            "CONNECTION_POOL_KWARGS": {
-                "max_connections": 100,
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",
+            "REDIS_CLUSTER_OPTIONS": {
+                "startup_nodes": [
+                    {
+                        "host": REDIS_HOST,
+                        "port": REDIS_PORT,
+                    }
+                ],
+                "decode_responses": True,
+                "skip_full_coverage_check": True,
+            },
+            "CONNECTION_POOL_CLASS_KWARGS": {
+                "max_connections": 50,
                 "retry_on_timeout": True,
-                "socket_keepalive": True,
+                "socket_timeout": 5,
             },
         },
-        "KEY_PREFIX": "prod",
     }
 }
+
 # 세션 설정
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
