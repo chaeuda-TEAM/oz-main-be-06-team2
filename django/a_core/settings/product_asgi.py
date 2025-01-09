@@ -39,25 +39,12 @@ CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.HerdClient",
-            "RETRY_ON_TIMEOUT": True,
-            "MAX_CONNECTIONS": 100,
-            "CONNECTION_POOL_KWARGS": {
-                "max_connections": 100,
-                "retry_on_timeout": True,
-                "socket_keepalive": True,
-            },
-        },
-        "KEY_PREFIX": "prod",
-    }
+    },
 }
 
-# 세션 설정
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+# 세션 설정 - DB 기반으로 변경
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 SESSION_COOKIE_AGE = 1209600  # 2주
-CACHE_TTL = 60 * 5  # 5분
 
 # Channels 설정
 ASGI_APPLICATION = "a_core.asgi.application"
@@ -65,9 +52,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [
-                f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
-            ],
+            "hosts": [f"redis://{REDIS_HOST}:{REDIS_PORT}/0"],
             "capacity": 1500,
             "expiry": 10,
             "prefix": "asgi:",
