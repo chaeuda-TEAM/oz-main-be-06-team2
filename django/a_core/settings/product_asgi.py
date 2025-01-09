@@ -40,13 +40,17 @@ CACHES = {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.HerdClient",
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",  # 클러스터 모드 추가
+            "CONNECTION_POOL_CLASS": "redis.cluster.ClusterConnectionPool",  # 클러스터 풀 추가
             "RETRY_ON_TIMEOUT": True,
             "MAX_CONNECTIONS": 100,
             "CONNECTION_POOL_KWARGS": {
                 "max_connections": 100,
                 "retry_on_timeout": True,
                 "socket_keepalive": True,
+                "socket_connect_timeout": 5,
+                "socket_timeout": 5,
             },
         },
         "KEY_PREFIX": "prod",
