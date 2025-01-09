@@ -4,12 +4,11 @@ from typing import List, Optional
 from a_apis.auth.bearer import AuthBearer
 from a_apis.models import ProductDetail
 from a_apis.schema.products import (
-    ProductRequestBodySchema,  # ProductAllSchema -> ProductRequestBodySchema로 변경
-)
-from a_apis.schema.products import (
     MyProductsSchemaResponseSchema,
     ProductAllResponseSchema,
+    ProductDetailAllResponseSchema,
     ProductLikeResponseSchema,
+    ProductRequestBodySchema,
     ProductUpdateResponseSchema,
     UserLikedProductsResponseSchema,
 )
@@ -42,7 +41,7 @@ def create_product(
     Args:
         request: Django 요청 객체
         data (ProductRequestBodySchema): 생성할 매물의 데이터
-        images (list[UploadedFile]): 업로드할 이미지 파일 목록 (최대 10장)
+        images (list[UploadedFile]): 업로드할 이미지 파일 목록 (필수, 최소 1장, 최대 10장)
         video (Optional[UploadedFile]): 업로드할 동영상 파일 (선택사항)
 
     Returns:
@@ -243,3 +242,38 @@ def eum_check(request):
         "heat_choices": dict(ProductDetail.HEAT_CHOICES),
         "type_choices": dict(ProductDetail.TYPE_CHOICES),
     }
+
+
+@public_router.get("/detail/{product_id}", response=ProductDetailAllResponseSchema)
+def get_product_detail(request, product_id: int):
+    """
+    매물 상세 정보 조회 API
+    ```
+    Args:
+        request: Django 요청 객체
+        product_id (int): 조회할 매물 ID
+
+    Returns:
+        ProductDetailAllResponseSchema: 매물 상세 정보 응답
+        - success: bool (요청 처리 성공 여부)
+        - message: str (응답 메시지)
+        - product: ProductInformationResponseSchema
+            - product_id: int (매물 ID)
+            - user: UserDetailSchema (매물 등록자 정보)
+            - images: list[str] (이미지 URL 목록)
+            - video: Optional[str] (동영상 URL)
+            - ... (기타 매물 상세 정보)
+            - is_liked: bool (현재 사용자의 찜 여부)
+    ```
+    """
+    try:
+        user = request.user if request.user.is_authenticated else None
+
+        return ProductService.get_product_detail(user, product_id)
+
+    except HttpError as e:
+        return Response({"success": False, "message": str(e)}, status=e.status_code)
+    except Exception as e:
+        return Response(
+            {"success": False, "message": "서버 오류가 발생했습니다."}, status=500
+        )
