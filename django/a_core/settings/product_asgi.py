@@ -18,7 +18,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://localhost:3000",
     "http://localhost:8000",
-    "ws://api.chaeuda.shop",
+    "ws://api.chaeuda.shop",  # WebSocket 보안 연결 추가
 ]
 
 CSRF_TRUSTED_ORIGINS = [
@@ -40,24 +40,16 @@ CACHES = {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",
-            "REDIS_CLUSTER_OPTIONS": {
-                "startup_nodes": [
-                    {
-                        "host": REDIS_HOST,
-                        "port": REDIS_PORT,
-                    }
-                ],
-                "decode_responses": True,
-                "skip_full_coverage_check": True,
-            },
-            "CONNECTION_POOL_CLASS_KWARGS": {
-                "max_connections": 50,
+            "CLIENT_CLASS": "django_redis.client.HerdClient",
+            "RETRY_ON_TIMEOUT": True,
+            "MAX_CONNECTIONS": 100,
+            "CONNECTION_POOL_KWARGS": {
+                "max_connections": 100,
                 "retry_on_timeout": True,
-                "socket_timeout": 5,
+                "socket_keepalive": True,
             },
         },
+        "KEY_PREFIX": "prod",
     }
 }
 
@@ -74,10 +66,7 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [
-                {
-                    "host": REDIS_HOST,
-                    "port": REDIS_PORT,
-                }
+                f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
             ],
             "capacity": 1500,
             "expiry": 10,
