@@ -19,7 +19,7 @@ class BuildingType(str, Enum):
     TYPE_ETC = "type_etc"
 
 
-# 매물 등록/수정 api request 스키마
+# 매물 등록/수정 api RequestBody 스키마
 class ProductRequestBodySchema(Schema):
     pro_title: str = Field(..., description="제목")
     pro_price: int = Field(..., description="매물금액")
@@ -64,6 +64,7 @@ class ProductResponseDetailSchema(Schema):
     add_old: str = Field(..., description="구주소")
     latitude: float = Field(..., description="위도")
     longitude: float = Field(..., description="경도")
+    is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
     created_at: datetime = Field(..., description="등록일")
     updated_at: datetime = Field(..., description="수정일")
 
@@ -97,6 +98,7 @@ class ProductUpdateResponseDetailSchema(Schema):
     add_old: str = Field(..., description="구주소")
     latitude: float = Field(..., description="위도")
     longitude: float = Field(..., description="경도")
+    is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
     created_at: datetime = Field(..., description="등록일")
     updated_at: datetime = Field(..., description="수정일")
 
@@ -127,6 +129,7 @@ class UserLikedProductsSchema(Schema):
     pro_supply_a: float = Field(..., description="공급면적")
     add_new: str = Field(..., description="매물 주소(도로명)")
     images: Optional[str] = Field(None, description="매물 이미지 URL(첫 번째 이미지)")
+    is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
     created_at: datetime = Field(..., description="찜한 시간")
 
 
@@ -147,6 +150,7 @@ class MyProductsSchema(Schema):
     pro_supply_a: float = Field(..., description="공급면적")
     add_new: str = Field(..., description="매물 주소(도로명)")
     images: Optional[str] = Field(None, description="매물 이미지 URL(첫 번째 이미지)")
+    is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
     created_at: datetime = Field(..., description="찜한 시간")
 
 
@@ -156,3 +160,45 @@ class MyProductsSchemaResponseSchema(Schema):
     message: str = Field(..., description="응답 메시지")
     total_count: int = Field(..., description="전체 등록 매물 수")
     products: list[MyProductsSchema] = Field(..., description="등록한 매물 목록")
+
+
+# 매물 상세조회를 위한 유저 정보 스키마
+class UserDetailSchema(Schema):
+    id: int = Field(..., description="유저 ID")
+    username: str = Field(..., description="유저 이름")
+    phone_number: str = Field(..., description="유저 휴대폰번호")
+
+
+# 매물 상세조회 응답 스키마
+class ProductInformationResponseSchema(Schema):
+    product_id: int = Field(..., description="매물 ID")
+    user: UserDetailSchema = Field(..., description="매물 등록 유저 정보")
+    images: list[str] = Field(..., description="매물 이미지 URL 목록")
+    video: Optional[str] = Field(None, description="매물 동영상 URL")
+    pro_title: str = Field(..., description="제목")
+    pro_price: int = Field(..., description="매물금액")
+    management_cost: Optional[int] = Field(default=None, description="관리비")
+    pro_supply_a: float = Field(..., description="공급면적(평수)")
+    pro_site_a: float = Field(..., description="부지면적")
+    pro_heat: HeatType = Field(..., description="난방방식")
+    pro_type: BuildingType = Field(..., description="건물유형")
+    pro_floor: int = Field(..., description="층")
+    description: str = Field(..., description="상세설명")
+    sale: Optional[bool] = Field(default=True, description="판매여부")
+    pro_rooms: int = Field(..., description="방 갯수")
+    pro_bathrooms: int = Field(..., description="욕실 갯수")
+    pro_construction_year: int = Field(..., description="건축연도")
+    add_new: str = Field(..., description="도로명주소")
+    add_old: str = Field(..., description="구주소")
+    latitude: float = Field(..., description="위도")
+    longitude: float = Field(..., description="경도")
+    is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
+    created_at: datetime = Field(..., description="등록일")
+    updated_at: datetime = Field(..., description="수정일")
+
+
+# 최종 매물 상세조회 응답 스키마
+class ProductDetailAllResponseSchema(Schema):
+    success: bool = Field(..., description="요청 처리 성공 여부")
+    message: str = Field(..., description="응답 메시지")
+    product: ProductInformationResponseSchema = Field(..., description="매물 상세 정보")
