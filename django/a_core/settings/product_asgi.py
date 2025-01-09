@@ -39,24 +39,7 @@ CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "REDIS_CLIENT_CLASS": "redis.cluster.RedisCluster",
-            "CONNECTION_POOL_CLASS": "redis.connection.ClusterConnection",
-            "CONNECTION_POOL_CLASS_KWARGS": {
-                "max_connections": 50,
-                "retry_on_timeout": True,
-                "decode_responses": True,
-            },
-            "PARSER_CLASS": "redis.connection.ClusterParser",
-            "REDIS_CLUSTER_SETTINGS": {
-                "nodes": [{"host": REDIS_HOST, "port": REDIS_PORT}],
-                "skip_full_coverage_check": True,
-                "reinitialize_steps": 10,
-                "read_from_replicas": True,
-            },
-        },
-    }
+    },
 }
 
 # 세션 설정 - DB 기반으로 변경
