@@ -44,7 +44,7 @@ CACHES = {
         "BACKEND": "django_redis.cache.RedisCache",
         # LOCATION은 "redis-cluster" 또는 "rediscluster://..." 식 임의 문자열로 두면 됩니다.
         # (실제 연결은 STARTUP_NODES 통해 이루어집니다.)
-        "LOCATION": "redis-cluster",
+        "LOCATION": f"redis://{REDIS_HOST}:{REDIS_PORT}/0",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClusterClient",
             # HerdClient를 사용하셨다면, cluster와 호환성 문제가 생길 수 있습니다.
