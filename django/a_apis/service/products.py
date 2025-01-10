@@ -1,5 +1,6 @@
 import os
 import uuid
+from math import cos, radians
 from typing import Optional
 
 from a_apis.models.products import (
@@ -532,6 +533,8 @@ class ProductService:
                     pro_type=product_detail.pro_type,
                     pro_supply_a=float(product_detail.pro_supply_a),
                     add_new=product_detail.address.add_new,
+                    latitude=float(product_detail.address.latitude),
+                    longitude=float(product_detail.address.longitude),
                     images=image_url,
                     is_liked=is_liked,
                     created_at=product_detail.created_at,
@@ -627,6 +630,97 @@ class ProductService:
                 {
                     "success": False,
                     "message": f"매물 상세 정보 조회 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
+
+    @staticmethod
+    # 지도 주변 매물 조회
+    def get_nearby_products(
+        user: Optional[User], latitude: float, longitude: float, zoom: int
+    ):
+        try:
+            # 줌 레벨에 따른 검색 반경 설정 (km)
+            # 9: ~300km (광역권)
+            # 13: ~20km (시/군 단위)
+            # 16: ~2km (동/읍 단위)
+            # 19: ~0.1km (건물 단위)
+            distance_map = {
+                9: 300.0,  # 광역권
+                10: 200.0,
+                11: 100.0,
+                12: 50.0,
+                13: 20.0,  # 광역시 기준 여러 구 단위
+                14: 10.0,
+                15: 5.0,
+                16: 2.0,  # 동/읍 단위
+                17: 1.0,
+                18: 0.5,
+                19: 0.1,  # 건물 단위
+            }
+
+            distance = distance_map[zoom]
+
+            # 위도/경도 범위 계산 (근사값)
+            lat_range = distance / 111.0
+            lon_range = distance / (111.0 * cos(radians(latitude)))
+
+            # 주어진 범위 내의 매물 조회
+            nearby_products = (
+                ProductDetail.objects.filter(
+                    address__latitude__range=(
+                        latitude - lat_range,
+                        latitude + lat_range,
+                    ),
+                    address__longitude__range=(
+                        longitude - lon_range,
+                        longitude + lon_range,
+                    ),
+                    sale=True,  # 판매 중인 매물만 조회
+                )
+                .select_related("address")
+                .prefetch_related("product_images", "likes")
+                .order_by("-created_at")
+            )
+
+            products_data = []
+            for product in nearby_products:
+                # 첫 번째 이미지 가져오기
+                first_image = product.product_images.first()
+                image_url = first_image.img_url if first_image else None
+
+                # 찜 여부 확인
+                is_liked = False
+                if user and user.is_authenticated:
+                    is_liked = product.likes.filter(id=user.id).exists()
+
+                product_data = MyProductsSchema(
+                    product_id=product.id,
+                    pro_title=product.pro_title,
+                    pro_price=product.pro_price,
+                    pro_type=product.pro_type,
+                    pro_supply_a=float(product.pro_supply_a),
+                    add_new=product.address.add_new,
+                    latitude=float(product.address.latitude),
+                    longitude=float(product.address.longitude),
+                    images=image_url,
+                    is_liked=is_liked,
+                    created_at=product.created_at,
+                )
+                products_data.append(product_data)
+
+            return MyProductsSchemaResponseSchema(
+                success=True,
+                message="주변 매물 조회가 완료되었습니다.",
+                total_count=len(products_data),
+                products=products_data,
+            )
+
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"주변 매물 조회 중 오류가 발생했습니다: {str(e)}",
                 },
                 status=500,
             )
