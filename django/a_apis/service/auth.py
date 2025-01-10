@@ -124,6 +124,7 @@ class GoogleAuthService:
             "user": {
                 "email": user.email,
                 "username": user.username,
+                "phone_number": user.phone_number if user.phone_number else "",
                 "is_active": user.is_active,
                 "is_email_verified": user.is_email_verified,
                 "is_social_login": user.is_social_login,
@@ -206,6 +207,7 @@ class KakaoAuthService:
             "user": {
                 "email": user.email,
                 "username": user.username,
+                "phone_number": user.phone_number if user.phone_number else "",
                 "is_active": user.is_active,
                 "is_email_verified": user.is_email_verified,
                 "is_social_login": user.is_social_login,
@@ -295,7 +297,7 @@ class NaverAuthService:
             "user": {
                 "email": user.email,
                 "username": user.username,
-                "phone_number": user.phone_number,
+                "phone_number": user.phone_number if user.phone_number else "",
                 "is_active": user.is_active,
                 "is_email_verified": user.is_email_verified,
                 "is_social_login": user.is_social_login,
