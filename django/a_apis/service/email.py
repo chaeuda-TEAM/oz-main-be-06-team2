@@ -63,7 +63,7 @@ class EmailService:
                 from_email=settings.EMAIL_HOST_USER,
                 recipient_list=[email],
                 html_message=html_message,
-                fail_silently=False,
+                fail_silently=True,
             )
 
             return {
