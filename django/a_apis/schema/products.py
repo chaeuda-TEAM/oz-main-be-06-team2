@@ -149,6 +149,8 @@ class MyProductsSchema(Schema):
     pro_type: str = Field(..., description="건물 유형")
     pro_supply_a: float = Field(..., description="공급면적")
     add_new: str = Field(..., description="매물 주소(도로명)")
+    latitude: float = Field(..., description="위도")
+    longitude: float = Field(..., description="경도")
     images: Optional[str] = Field(None, description="매물 이미지 URL(첫 번째 이미지)")
     is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
     created_at: datetime = Field(..., description="찜한 시간")
