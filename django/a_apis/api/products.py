@@ -277,3 +277,45 @@ def get_product_detail(request, product_id: int):
         return Response(
             {"success": False, "message": "서버 오류가 발생했습니다."}, status=500
         )
+
+
+@public_router.get("/nearby", response=MyProductsSchemaResponseSchema)
+def get_nearby_products(
+    request,
+    latitude: float,
+    longitude: float,
+    zoom: int = 13,  # 기본값 13 (적당한 view)
+):
+    """
+    주변 매물 조회 API
+    ```
+    Args:
+        request: Django 요청 객체
+        latitude (float): 중심점 위도
+        longitude (float): 중심점 경도
+        zoom (int): 지도 줌 레벨 (9~19, 기본값 13)
+                   9: 광역권 (~300km)
+                   13: 광역시 기준 여러 구 단위 (~20km)
+                   16: 동/읍 단위 (~2km)
+                   19: 건물 단위 (~100m)
+
+    Returns:
+        MyProductsSchemaResponseSchema: 주변 매물 목록
+    ```
+    """
+    try:
+        if not 9 <= zoom <= 19:
+            return Response(
+                {"success": False, "message": "줌 레벨은 9~19 사이여야 합니다."},
+                status=400,
+            )
+
+        user = request.user if request.user.is_authenticated else None
+        response_data = ProductService.get_nearby_products(
+            user, latitude, longitude, zoom
+        )
+        return response_data
+    except Exception as e:
+        return Response(
+            {"success": False, "message": "서버 오류가 발생했습니다."}, status=500
+        )
