@@ -82,7 +82,14 @@ def request_email_verification(request, data: EmailVerificationRequestSchema):
     return EmailService.send_verification_email(data.email)
 
 
-@nomal_router.post("/verify-email", response=ErrorResponseSchema)
+@nomal_router.post(
+    "/verify-email",
+    response={
+        200: ErrorResponseSchema,
+        400: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+    },
+)
 def verify_email(request, data: EmailVerificationSchema):
     """
     이메일 인증번호 확인 엔드포인트
