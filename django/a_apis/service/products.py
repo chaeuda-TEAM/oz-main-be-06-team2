@@ -108,7 +108,9 @@ class ProductService:
             # 비디오 처리
             video_url = None
             if video:
-                file_path = f"products/videos/{video.name}"
+                # uuid를 사용하여 고유한 파일명 생성
+                file_extension = video.name.split(".")[-1]
+                file_path = f"products/videos/{str(uuid.uuid4())[:8]}.{file_extension}"
                 saved_path = default_storage.save(file_path, video)
                 video_url = default_storage.url(saved_path)
                 product_video = ProductVideo.objects.create(video_url=video_url)
@@ -229,8 +231,11 @@ class ProductService:
                 if video:
                     if product_detail.video:
                         old_video = product_detail.video
-                        # S3에 새 비디오 업로드
-                        file_path = f"products/videos/{video.name}"
+                        # uuid를 사용하여 고유한 파일명 생성
+                        file_extension = video.name.split(".")[-1]
+                        file_path = (
+                            f"products/videos/{str(uuid.uuid4())[:8]}.{file_extension}"
+                        )
                         saved_path = default_storage.save(file_path, video)
                         video_url = default_storage.url(saved_path)
                         product_detail.video = ProductVideo.objects.create(
@@ -454,7 +459,7 @@ class ProductService:
             for like in liked_products:
                 # 첫 번째 이미지를 가져오기
                 first_image = like.product.product_images.first()
-                image_url = first_image.img_url if first_image else None
+                image_url = str(first_image.img_url) if first_image else None
 
                 # 찜 목록이므로 무조건 True (자신이 찜한 목록)
                 product_data = UserLikedProductsSchema(
@@ -517,7 +522,7 @@ class ProductService:
             for product_detail in registered_products:
                 # 첫 번째 이미지를 가져오기
                 first_image = product_detail.product_images.first()
-                image_url = first_image.img_url if first_image else None
+                image_url = str(first_image.img_url) if first_image else None
 
                 # 현재 로그인한 사용자(본인)의 찜 여부 확인
                 is_liked = (
@@ -571,11 +576,15 @@ class ProductService:
                 .get(id=product_id)
             )
 
-            # 이미지 URL 리스트 생성
-            image_urls = [img.img_url.url for img in product.product_images.all()]
+            # 이미지 URL 리스트 생성 - str()로 단순 변환
+            image_urls = [str(img.img_url) for img in product.product_images.all()]
 
-            # 비디오 URL
-            video_url = product.video.video_url.url if product.video else None
+            # 비디오 URL - default_storage.url()을 사용하여 전체 URL 생성
+            video_url = (
+                default_storage.url(product.video.video_url.name)
+                if product.video
+                else None
+            )
 
             # 찜 여부 체크 로직 개선
             is_liked = False
@@ -687,7 +696,7 @@ class ProductService:
             for product in nearby_products:
                 # 첫 번째 이미지 가져오기
                 first_image = product.product_images.first()
-                image_url = first_image.img_url if first_image else None
+                image_url = str(first_image.img_url) if first_image else None
 
                 # 찜 여부 확인
                 is_liked = False
