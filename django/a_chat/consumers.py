@@ -14,17 +14,17 @@ logger = getLogger(__name__)
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         try:
-            # 헤더에서 토큰 추출
-            headers = dict(self.scope["headers"])
-            auth_header = headers.get(b"authorization", b"").decode()
+            # URL 쿼리 파라미터에서 토큰 추출
+            query_string = self.scope.get("query_string", b"").decode()
+            query_params = dict(
+                param.split("=") for param in query_string.split("&") if param
+            )
+            token = query_params.get("token")
 
-            if not auth_header.startswith("Bearer "):
-                logger.error("Invalid authorization header")
+            if not token:
+                logger.error("토큰이 없습니다.")
                 await self.close()
                 return
-
-            # Bearer 제거하고 순수 토큰만 추출
-            token = auth_header.split(" ")[1]
 
             # JWT 토큰 디코드
             try:
