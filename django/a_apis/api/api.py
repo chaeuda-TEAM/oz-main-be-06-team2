@@ -1,3 +1,4 @@
+from a_apis.service.common_parser import CommonParser
 from ninja import NinjaAPI
 
 from .auth import router as auth_router
@@ -13,6 +14,7 @@ api = NinjaAPI(
     title="chaeuda API",
     description="chaeuda API documentation",
     version="1.0.0",
+    parser=CommonParser(),
 )
 
 api.add_router("/auth/", auth_router, tags=["Auth"])

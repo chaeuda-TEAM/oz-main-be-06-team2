@@ -1,7 +1,7 @@
 from typing import Optional
 
 from ninja import Schema
-from pydantic import EmailStr, Extra, field_validator, model_validator
+from pydantic import EmailStr, field_validator, model_validator
 
 
 class EmailVerificationRequestSchema(Schema):
@@ -60,20 +60,6 @@ class WithdrawalSchema(Schema):
 class EmailVerificationSchema(Schema):
     email: EmailStr
     code: str
-
-    @model_validator(mode="before")
-    @classmethod
-    def check_duplicate_fields(cls, data):
-        print(f"{type(data) = }")
-        print(f"{data = }")
-        print(f"{data.email = }")
-        if isinstance(data, dict):
-            email_count = sum(1 for k in data.keys() if k == "email")
-            code_count = sum(1 for k in data.keys() if k == "code")
-
-            if email_count > 1 or code_count > 1:
-                raise ValueError("중복된 필드가 존재합니다")
-        return data
 
     @field_validator("code")
     @classmethod

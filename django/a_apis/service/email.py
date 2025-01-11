@@ -90,7 +90,7 @@ class EmailService:
             )
 
     @staticmethod
-    def verify_email(email: str, code: str) -> dict:
+    def verify_email(email: str, code: str) -> tuple[int, dict]:
         verification = UserCRUD.email_verification(email, code)
 
         if verification.is_expired:
