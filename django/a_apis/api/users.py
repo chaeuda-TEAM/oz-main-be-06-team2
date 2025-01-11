@@ -1,4 +1,5 @@
 from a_apis.auth.bearer import AuthBearer
+from a_apis.models import EmailVerification
 from a_apis.schema.users import *
 from a_apis.service.email import EmailService
 from a_apis.service.users import UserService
@@ -101,7 +102,19 @@ def verify_email(request, data: EmailVerificationSchema):
     Returns:
         dict: 이메일 인증 확인 결과
     """
-    return EmailService.verify_email(data.email, data.code)
+    try:
+        return EmailService.verify_email(data.email, data.code)
+
+    except EmailVerification.DoesNotExist:
+        return 500, {
+            "success": False,
+            "message": "유효하지 않은 인증번호입니다.",
+        }
+    except Exception as e:
+        return 500, {
+            "success": False,
+            "message": f"처리 중 오류가 발생했습니다: {str(e)}",
+        }
 
 
 @router.delete("/withdraw", response=ErrorResponseSchema)

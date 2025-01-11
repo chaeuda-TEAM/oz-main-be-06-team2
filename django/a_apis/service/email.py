@@ -1,3 +1,4 @@
+from a_apis.CRUD.userCRUD import UserCRUD
 from a_apis.models.email_verification import EmailVerification
 from a_user.models import User
 from ninja.responses import Response
@@ -90,32 +91,18 @@ class EmailService:
 
     @staticmethod
     def verify_email(email: str, code: str) -> dict:
-        try:
-            verification = EmailVerification.objects.get(
-                email=email, verification_code=code, is_verified=False
-            )
+        verification = UserCRUD.email_verification(email, code)
 
-            if verification.is_expired:
-                return 400, {
-                    "success": False,
-                    "message": "인증번호가 만료되었습니다. 다시 시도해주세요.",
-                }
-
-            verification.is_verified = True
-            verification.save()
-
-            return 200, {
-                "success": True,
-                "message": "이메일 인증이 완료되었습니다.",
-            }
-
-        except EmailVerification.DoesNotExist:
-            return 500, {
+        if verification.is_expired:
+            return 400, {
                 "success": False,
-                "message": "유효하지 않은 인증번호입니다.",
+                "message": "인증번호가 만료되었습니다. 다시 시도해주세요.",
             }
-        except Exception as e:
-            return 500, {
-                "success": False,
-                "message": f"처리 중 오류가 발생했습니다: {str(e)}",
-            }
+
+        verification.is_verified = True
+        verification.save()
+
+        return 200, {
+            "success": True,
+            "message": "이메일 인증이 완료되었습니다.",
+        }
