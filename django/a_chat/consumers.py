@@ -39,6 +39,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 self.room_id = self.scope["url_route"]["kwargs"]["room_id"]
                 self.room_group_name = f"chat_{self.room_id}"
 
+                # 유저정보 가져오기
+                user_record = await execute_query(
+                    """
+                    SELECT * FROM users WHERE id = $1
+                """,
+                    int(self.user_id),
+                )
+
+                self.user_info = {}
+                self.user_info["id"] = user_record[0]["id"]
+                self.user_info["username"] = user_record[0]["username"]
+                self.user_info["email"] = user_record[0]["email"]
+
                 # 채팅방이 있는지 검사해서, 없으면 연결끊기
                 chat_room = await execute_query(
                     """
@@ -151,9 +164,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 message,
             )
 
+            print(self.user_info)
+
+            if not self.user_info:
+                raise ValueError("User information not found")
+
             await self.channel_layer.group_send(
                 self.room_group_name,
-                {"type": "chat_message", "message": message, "sender": sender},
+                {"type": "chat_message", "message": message, "sender": self.user_info},
             )
         except json.JSONDecodeError:
             logger.error("Invalid JSON format")
