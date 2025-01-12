@@ -67,6 +67,34 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     int(chat_room[0]["item_id"]),
                 )
 
+                prev_messages = await execute_query(
+                    """
+                    SELECT cm.*, u.username as sender_username, u.email as sender_email 
+                    FROM chat_message cm
+                    JOIN users u ON cm.sender_id = u.id
+                    WHERE cm.chat_room_id = $1
+                    """,
+                    int(self.room_id),
+                )
+
+                # Record 객체를 딕셔너리로 변환
+                formatted_messages = []
+                for msg in prev_messages:
+                    formatted_messages.append(
+                        {
+                            "id": msg["id"],
+                            "message": msg["message"],
+                            "sender": {
+                                "id": msg["sender_id"],
+                                "username": msg["sender_username"],
+                                "email": msg["sender_email"],
+                            },
+                            "chat_room_id": msg["chat_room_id"],
+                            "created_at": msg["created_at"].isoformat(),
+                            "updated_at": msg["updated_at"].isoformat(),
+                        }
+                    )
+
                 buyer_id = chat_room[0]["buyer_id"]
                 seller_id = item[0]["user"]
 
@@ -103,6 +131,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         {
                             "type": "connection_established",
                             "message": "Connected to chat room",
+                            "user_info": self.user_info,
+                            "prev_messages": formatted_messages,  # 변환된 메시지 사용
                         }
                     )
                 )
