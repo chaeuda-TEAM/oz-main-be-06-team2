@@ -8,7 +8,7 @@ ALLOWED_HOSTS = [
     "api.chaeuda.shop",
     "localhost",
     "127.0.0.1",
-    "54.180.104.88",  # EC2 IP
+    "52.78.37.115",  # EC2 IP
 ]
 CORS_ALLOWED_ORIGINS = [
     "https://chaeuda.shop",
