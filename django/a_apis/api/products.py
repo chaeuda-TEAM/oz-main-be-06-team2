@@ -6,6 +6,7 @@ from a_apis.models import ProductDetail
 from a_apis.schema.products import (
     MyProductsSchemaResponseSchema,
     ProductAllResponseSchema,
+    ProductDeleteResponseSchema,
     ProductDetailAllResponseSchema,
     ProductLikeResponseSchema,
     ProductRequestBodySchema,
@@ -117,6 +118,46 @@ def update_product(
         response_data = ProductService.update_product(
             user, product_id, data, images, video
         )
+        return response_data
+
+    except HttpError as e:
+        return Response({"success": False, "message": str(e)}, status=e.status_code)
+    except Exception as e:
+        return Response(
+            {"success": False, "message": "서버 오류가 발생했습니다."}, status=500
+        )
+
+
+@router.delete(
+    "/delete/{product_id}",
+    response={
+        200: ProductDeleteResponseSchema,
+    },
+)
+@login_required
+def delete_product(
+    request,
+    product_id: int,
+):
+    """
+    매물 삭제 API (soft delete)
+    ```
+    Args:
+        request: Django 요청 객체
+        product_id (int): 삭제할 매물 ID
+
+    Returns:
+        dict: 삭제 처리 결과
+        - success: bool (삭제 성공 여부)
+        - message: str (처리 결과 메시지)
+
+    Note:
+        - soft delete로 구현되어 실제로 데이터가 삭제되지 않고 is_deleted 필드만 True로 변경됨
+        - 본인이 등록한 매물만 삭제 가능
+    ```
+    """
+    try:
+        response_data = ProductService.delete_product(request.user, product_id)
         return response_data
 
     except HttpError as e:
