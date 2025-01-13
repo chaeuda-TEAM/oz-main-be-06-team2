@@ -10,6 +10,7 @@ class ProductAddress(CommonModel):
     add_old = models.CharField(max_length=200, verbose_name="구주소")
     latitude = models.FloatField(verbose_name="위도")
     longitude = models.FloatField(verbose_name="경도")
+    is_deleted = models.BooleanField(default=False, verbose_name="삭제 여부")
 
     class Meta:
         db_table = "product_address"
@@ -25,6 +26,7 @@ class ProductVideo(CommonModel):
     video_url = models.FileField(
         upload_to="video/", null=True, blank=True, verbose_name="동영상 URL"
     )
+    is_deleted = models.BooleanField(default=False, verbose_name="삭제 여부")
 
     class Meta:
         db_table = "product_video"
@@ -95,6 +97,7 @@ class ProductDetail(CommonModel):
         verbose_name="유저-매물 찜 목록",
         related_name="product_likes",
     )
+    is_deleted = models.BooleanField(default=False, verbose_name="삭제 여부")
 
     class Meta:
         db_table = "product_detail"
@@ -119,6 +122,7 @@ class ProductImg(CommonModel):
         verbose_name="매물 ID",
         related_name="product_images",
     )
+    is_deleted = models.BooleanField(default=False, verbose_name="삭제 여부")
 
     class Meta:
         db_table = "product_img"
@@ -143,6 +147,7 @@ class ProductLikes(CommonModel):
         verbose_name="매물 ID",
         related_name="product_likes",  # 매물 -> 찜한 유저 접근
     )
+    is_deleted = models.BooleanField(default=False, verbose_name="삭제 여부")
 
     class Meta:
         db_table = "product_like"
