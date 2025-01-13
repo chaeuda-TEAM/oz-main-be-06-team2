@@ -65,6 +65,7 @@ class ProductResponseDetailSchema(Schema):
     latitude: float = Field(..., description="위도")
     longitude: float = Field(..., description="경도")
     is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
+    is_deleted: bool = Field(default=False, description="삭제 여부")
     created_at: datetime = Field(..., description="등록일")
     updated_at: datetime = Field(..., description="수정일")
 
@@ -99,6 +100,7 @@ class ProductUpdateResponseDetailSchema(Schema):
     latitude: float = Field(..., description="위도")
     longitude: float = Field(..., description="경도")
     is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
+    is_deleted: bool = Field(default=False, description="삭제 여부")
     created_at: datetime = Field(..., description="등록일")
     updated_at: datetime = Field(..., description="수정일")
 
@@ -130,6 +132,7 @@ class UserLikedProductsSchema(Schema):
     add_new: str = Field(..., description="매물 주소(도로명)")
     images: Optional[str] = Field(None, description="매물 이미지 URL(첫 번째 이미지)")
     is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
+    is_deleted: bool = Field(default=False, description="삭제 여부")
     created_at: datetime = Field(..., description="찜한 시간")
 
 
@@ -153,6 +156,7 @@ class MyProductsSchema(Schema):
     longitude: float = Field(..., description="경도")
     images: Optional[str] = Field(None, description="매물 이미지 URL(첫 번째 이미지)")
     is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
+    is_deleted: bool = Field(default=False, description="삭제 여부")
     created_at: datetime = Field(..., description="찜한 시간")
 
 
@@ -195,6 +199,7 @@ class ProductInformationResponseSchema(Schema):
     latitude: float = Field(..., description="위도")
     longitude: float = Field(..., description="경도")
     is_liked: bool = Field(..., description="현재 사용자의 찜 여부")
+    is_deleted: bool = Field(default=False, description="삭제 여부")
     created_at: datetime = Field(..., description="등록일")
     updated_at: datetime = Field(..., description="수정일")
 
@@ -204,3 +209,9 @@ class ProductDetailAllResponseSchema(Schema):
     success: bool = Field(..., description="요청 처리 성공 여부")
     message: str = Field(..., description="응답 메시지")
     product: ProductInformationResponseSchema = Field(..., description="매물 상세 정보")
+
+
+# 매물 삭제 응답 스키마
+class ProductDeleteResponseSchema(Schema):
+    success: bool = Field(..., description="삭제 처리 성공 여부")
+    message: str = Field(..., description="응답 메시지")

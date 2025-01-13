@@ -14,6 +14,7 @@ from a_apis.schema.products import (
     MyProductsSchema,
     MyProductsSchemaResponseSchema,
     ProductAllResponseSchema,
+    ProductDeleteResponseSchema,
     ProductDetailAllResponseSchema,
     ProductInformationResponseSchema,
     ProductLikeResponseSchema,
@@ -437,7 +438,10 @@ class ProductService:
 
         try:
             liked_products = (
-                ProductLikes.objects.filter(user=user)
+                ProductLikes.objects.filter(
+                    user=user,
+                    product__is_deleted=False,  # 삭제되지 않은 매물만
+                )
                 .select_related("product", "product__address")
                 .prefetch_related("product__product_images")
                 .order_by("-created_at")
@@ -471,6 +475,7 @@ class ProductService:
                     pro_supply_a=like.product.pro_supply_a,
                     images=image_url,
                     is_liked=True,  # 본인의 찜 목록이므로 항상 True
+                    is_deleted=like.product.is_deleted,
                     created_at=like.created_at,
                 )
                 products_data.append(product_data)
@@ -501,7 +506,10 @@ class ProductService:
 
         try:
             registered_products = (
-                ProductDetail.objects.filter(user=user)
+                ProductDetail.objects.filter(
+                    user=user,
+                    is_deleted=False,  # 삭제되지 않은 매물만
+                )
                 .select_related("address")
                 .prefetch_related("product_images")
                 .order_by("-created_at")
@@ -542,6 +550,7 @@ class ProductService:
                     longitude=float(product_detail.address.longitude),
                     images=image_url,
                     is_liked=is_liked,
+                    is_deleted=product_detail.is_deleted,
                     created_at=product_detail.created_at,
                 )
                 products_data.append(product_data)
@@ -571,7 +580,8 @@ class ProductService:
             )
             # select_related와 prefetch_related를 사용하여 쿼리 최적화
             product = (
-                ProductDetail.objects.select_related("user", "address", "video")
+                ProductDetail.objects.filter(is_deleted=False)  # 삭제되지 않은 매물만
+                .select_related("user", "address", "video")
                 .prefetch_related("product_images", "likes")  # likes 추가
                 .get(id=product_id)
             )
@@ -625,6 +635,7 @@ class ProductService:
                     latitude=float(product.address.latitude),
                     longitude=float(product.address.longitude),
                     is_liked=is_liked,
+                    is_deleted=product.is_deleted,
                     created_at=product.created_at,
                     updated_at=product.updated_at,
                 ),
@@ -677,6 +688,7 @@ class ProductService:
             # 주어진 범위 내의 매물 조회
             nearby_products = (
                 ProductDetail.objects.filter(
+                    is_deleted=False,  # 삭제되지 않은 매물만
                     address__latitude__range=(
                         latitude - lat_range,
                         latitude + lat_range,
@@ -714,6 +726,7 @@ class ProductService:
                     longitude=float(product.address.longitude),
                     images=image_url,
                     is_liked=is_liked,
+                    is_deleted=product.is_deleted,
                     created_at=product.created_at,
                 )
                 products_data.append(product_data)
@@ -730,6 +743,75 @@ class ProductService:
                 {
                     "success": False,
                     "message": f"주변 매물 조회 중 오류가 발생했습니다: {str(e)}",
+                },
+                status=500,
+            )
+
+    @staticmethod
+    # 매물 삭제
+    def delete_product(user: User, product_id: int):
+        if not user.is_authenticated:
+            return Response(
+                {"success": False, "message": "로그인이 필요합니다."}, status=401
+            )
+
+        try:
+            with transaction.atomic():  # 트랜잭션 시작
+                product = ProductDetail.objects.get(id=product_id)
+
+                # 이미 삭제된 매물인지 확인
+                if product.is_deleted:
+                    return Response(
+                        {"success": False, "message": "이미 삭제된 매물입니다."},
+                        status=400,
+                    )
+
+                # 삭제 권한 확인
+                if product.user != user:
+                    return Response(
+                        {
+                            "success": False,
+                            "message": "해당 매물을 삭제할 권한이 없습니다.",
+                        },
+                        status=403,
+                    )
+
+                # 연관된 모든 데이터 soft delete 처리
+                # 1. 주소 정보 삭제
+                product.address.is_deleted = True
+                product.address.save()
+
+                # 2. 이미지 정보 삭제
+                ProductImg.objects.filter(product_detail=product).update(
+                    is_deleted=True
+                )
+
+                # 3. 비디오 정보 삭제
+                if product.video:
+                    product.video.is_deleted = True
+                    product.video.save()
+
+                # 4. 찜하기 정보 삭제
+                ProductLikes.objects.filter(product=product).update(is_deleted=True)
+
+                # 5. 매물 정보 삭제
+                product.is_deleted = True
+                product.save()
+
+                return ProductDeleteResponseSchema(
+                    success=True,
+                    message="매물이 성공적으로 삭제되었습니다.",
+                )
+
+        except ProductDetail.DoesNotExist:
+            return Response(
+                {"success": False, "message": "매물을 찾을 수 없습니다."}, status=404
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"매물 삭제 중 오류가 발생했습니다: {str(e)}",
                 },
                 status=500,
             )
