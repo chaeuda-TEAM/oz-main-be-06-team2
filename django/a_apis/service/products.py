@@ -116,35 +116,6 @@ class ProductService:
                 video_url = default_storage.url(saved_path)
                 product_video = ProductVideo.objects.create(video_url=video_url)
 
-            # 매물 생성 직후에는 무조건 false (생성한 사용자도 아직 찜하지 않음)
-            is_liked = False
-
-            response_data = {
-                "images": image_urls,
-                "video": video_url,
-                "detail": {
-                    "pro_title": product_detail.pro_title,
-                    "pro_price": product_detail.pro_price,
-                    "management_cost": product_detail.management_cost,
-                    "pro_supply_a": product_detail.pro_supply_a,
-                    "pro_site_a": product_detail.pro_site_a,
-                    "pro_heat": product_detail.pro_heat,
-                    "pro_type": product_detail.pro_type,
-                    "pro_floor": product_detail.pro_floor,
-                    "pro_rooms": product_detail.pro_rooms,
-                    "pro_bathrooms": product_detail.pro_bathrooms,
-                    "pro_construction_year": product_detail.pro_construction_year,
-                    "description": product_detail.description,
-                    "sale": product_detail.sale,
-                },
-                "address": {
-                    "add_new": product_detail.address.add_new,
-                    "add_old": product_detail.address.add_old,
-                    "latitude": product_detail.address.latitude,
-                    "longitude": product_detail.address.longitude,
-                },
-            }
-
             return ProductAllResponseSchema(
                 success=True,
                 message="성공적으로 생성되었습니다.",
@@ -169,7 +140,7 @@ class ProductService:
                     add_old=product_detail.address.add_old,
                     latitude=float(product_detail.address.latitude),
                     longitude=float(product_detail.address.longitude),
-                    is_liked=is_liked,
+                    is_liked=False,  # 생성 시에는 무조건 False
                     created_at=product_detail.created_at,
                     updated_at=product_detail.updated_at,
                 ),
@@ -280,50 +251,15 @@ class ProductService:
                         )
 
                 # 현재 로그인한 사용자의 찜 여부 확인
-                is_liked = (
-                    product_detail.likes.filter(id=user.id).exists()
-                    if user.is_authenticated
-                    else False
-                )
-
-                # response_data 구성
-                response_data = {
-                    "images": (
-                        [
-                            default_storage.url(img.img_url.name)
-                            for img in product_detail.product_images.all()
-                        ]
-                        if product_detail.product_images.exists()
-                        else None
-                    ),
-                    "video": (
-                        default_storage.url(product_detail.video.video_url.name)
-                        if product_detail.video
-                        else None
-                    ),
-                    "detail": {
-                        "pro_title": product_detail.pro_title,
-                        "pro_price": product_detail.pro_price,
-                        "management_cost": product_detail.management_cost,
-                        "pro_supply_a": product_detail.pro_supply_a,
-                        "pro_site_a": product_detail.pro_site_a,
-                        "pro_heat": product_detail.pro_heat,
-                        "pro_type": product_detail.pro_type,
-                        "pro_floor": product_detail.pro_floor,
-                        "pro_rooms": product_detail.pro_rooms,
-                        "pro_bathrooms": product_detail.pro_bathrooms,
-                        "pro_construction_year": product_detail.pro_construction_year,
-                        "description": product_detail.description,
-                        "sale": product_detail.sale,
-                    },
-                    "address": {
-                        "add_new": product_detail.address.add_new,
-                        "add_old": product_detail.address.add_old,
-                        "latitude": product_detail.address.latitude,
-                        "longitude": product_detail.address.longitude,
-                    },
-                    "product_id": product_detail.id,  # product_id 추가
-                }
+                # ProductLikes 객체가 없는 경우도 고려
+                try:
+                    like_obj = ProductLikes.objects.get(
+                        user=user, product=product_detail
+                    )
+                    is_liked = like_obj.is_liked
+                except ProductLikes.DoesNotExist:
+                    # 찜한 적이 없으면 False
+                    is_liked = False
 
                 return ProductUpdateResponseSchema(
                     success=True,
@@ -393,26 +329,23 @@ class ProductService:
 
         try:
             product = ProductDetail.objects.get(id=product_id)
+            like_obj, created = ProductLikes.objects.get_or_create(
+                user=user, product=product, defaults={"is_liked": True}
+            )
 
-            # 이미 찜한 경우 -> 찜하기 취소
-            if product.likes.filter(id=user.id).exists():
-                product.likes.remove(user)
-                is_liked = False
-                message = "찜하기가 취소되었습니다."
-                created_at = None
-            # 찜하지 않은 경우 -> 찜하기
-            else:
-                product.likes.add(user)
-                is_liked = True
-                message = "찜하기가 완료되었습니다."
-                like_obj = ProductLikes.objects.get(user=user, product=product)
-                created_at = like_obj.created_at
+            if not created:
+                # 이미 존재하는 경우 상태 토글
+                like_obj.is_liked = not like_obj.is_liked
+                like_obj.save()
 
             return ProductLikeResponseSchema(
                 success=True,
-                message=message,
-                is_liked=is_liked,
-                created_at=created_at,
+                message=(
+                    "찜하기가 완료되었습니다."
+                    if like_obj.is_liked
+                    else "찜하기가 취소되었습니다."
+                ),
+                is_liked=like_obj.is_liked,
             )
 
         except ProductDetail.DoesNotExist:
@@ -441,6 +374,7 @@ class ProductService:
                 ProductLikes.objects.filter(
                     user=user,
                     product__is_deleted=False,  # 삭제되지 않은 매물만
+                    is_liked=True,  # 실제 찜한 상태인 것만 조회
                 )
                 .select_related("product", "product__address")
                 .prefetch_related("product__product_images")
@@ -534,7 +468,9 @@ class ProductService:
 
                 # 현재 로그인한 사용자(본인)의 찜 여부 확인
                 is_liked = (
-                    product_detail.likes.filter(id=user.id).exists()
+                    ProductLikes.objects.filter(
+                        user=user, product=product_detail, is_liked=True
+                    ).exists()
                     if user.is_authenticated
                     else False
                 )
@@ -596,12 +532,11 @@ class ProductService:
                 else None
             )
 
-            # 찜 여부 체크 로직 개선
+            # 찜 여부 체크 로직 수정
             is_liked = False
             if user and user.is_authenticated:
-                # 직접 ProductLikes 테이블 조회
                 is_liked = ProductLikes.objects.filter(
-                    user=user, product=product
+                    user=user, product=product, is_liked=True
                 ).exists()
 
             # response 구성 부분은 동일
@@ -713,7 +648,9 @@ class ProductService:
                 # 찜 여부 확인
                 is_liked = False
                 if user and user.is_authenticated:
-                    is_liked = product.likes.filter(id=user.id).exists()
+                    is_liked = ProductLikes.objects.filter(
+                        user=user, product=product, is_liked=True
+                    ).exists()
 
                 product_data = MyProductsSchema(
                     product_id=product.id,
