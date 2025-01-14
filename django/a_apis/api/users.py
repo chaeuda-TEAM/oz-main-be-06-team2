@@ -1,10 +1,14 @@
 from a_apis.auth.bearer import AuthBearer
+from a_apis.models import EmailVerification
 from a_apis.schema.users import *
+
+# from a_apis.service.common_parser import CommonParser
 from a_apis.service.email import EmailService
 from a_apis.service.users import UserService
 from ninja import Router
 
 nomal_router = Router()
+# cutom_router = Router(parser=CommonParser())
 router = Router(auth=AuthBearer())
 
 
@@ -82,7 +86,15 @@ def request_email_verification(request, data: EmailVerificationRequestSchema):
     return EmailService.send_verification_email(data.email)
 
 
-@nomal_router.post("/verify-email", response=ErrorResponseSchema)
+@nomal_router.post(
+    "/verify-email",
+    response={
+        200: ErrorResponseSchema,
+        400: ErrorResponseSchema,
+        500: ErrorResponseSchema,
+    },
+    # parser=CommonParser(),
+)
 def verify_email(request, data: EmailVerificationSchema):
     """
     이메일 인증번호 확인 엔드포인트
@@ -94,7 +106,19 @@ def verify_email(request, data: EmailVerificationSchema):
     Returns:
         dict: 이메일 인증 확인 결과
     """
-    return EmailService.verify_email(data.email, data.code)
+    try:
+        return EmailService.verify_email(data.email, data.code)
+
+    except EmailVerification.DoesNotExist:
+        return 500, {
+            "success": False,
+            "message": "유효하지 않은 인증번호입니다.",
+        }
+    except Exception as e:
+        return 500, {
+            "success": False,
+            "message": f"처리 중 오류가 발생했습니다: {str(e)}",
+        }
 
 
 @router.delete("/withdraw", response=ErrorResponseSchema)
