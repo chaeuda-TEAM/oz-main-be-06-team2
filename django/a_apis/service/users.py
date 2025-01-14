@@ -150,6 +150,9 @@ class UserService:
                     data={
                         "success": False,
                         "message": "탈퇴한 사용자입니다.",
+                        "user": {
+                            "is_active": user.is_active,
+                        },
                     },
                 )
             else:
