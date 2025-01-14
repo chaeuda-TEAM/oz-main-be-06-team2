@@ -10,6 +10,8 @@ from .products import router as product_router
 from .users import nomal_router as user_nomal_router
 from .users import router as user_router
 
+# from .users import cutom_router as user_cutom_router
+
 api = NinjaAPI(
     title="chaeuda API",
     description="chaeuda API documentation",
@@ -17,9 +19,11 @@ api = NinjaAPI(
     parser=CommonParser(),
 )
 
+
 api.add_router("/auth/", auth_router, tags=["Auth"])
 api.add_router("/users/", user_router, tags=["Users"])
 api.add_router("/users/", user_nomal_router, tags=["Users"])
+# api.add_router("/users/", user_cutom_router, tags=["Users"])
 api.add_router("/legal/", legal_router, tags=["Test"])
 api.add_router("/", health_router, tags=["Test"])
 api.add_router("/product/", product_router, tags=["Products"])

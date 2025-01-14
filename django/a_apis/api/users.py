@@ -7,6 +7,7 @@ from a_apis.service.users import UserService
 from ninja import Router
 
 nomal_router = Router()
+# cutom_router = Router(parser=CommonParser())
 router = Router(auth=AuthBearer())
 
 
@@ -91,7 +92,7 @@ def request_email_verification(request, data: EmailVerificationRequestSchema):
         400: ErrorResponseSchema,
         500: ErrorResponseSchema,
     },
-    # parser=CommonParser(),
+    parser=CommonParser(),
 )
 def verify_email(request, data: EmailVerificationSchema):
     """
