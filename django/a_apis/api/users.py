@@ -102,7 +102,7 @@ def withdraw(request):
     """
     회원 탈퇴 엔드포인트
     """
-    return UserService.withdraw_user(request, data)
+    return UserService.withdraw_user(request)
 
 
 @nomal_router.post("/logout", response=ErrorResponseSchema)
