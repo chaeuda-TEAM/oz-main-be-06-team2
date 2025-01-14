@@ -117,9 +117,6 @@ class ProductLikeResponseSchema(Schema):
     success: bool
     message: str
     is_liked: bool  # 찜하기 상태
-    created_at: Optional[datetime] = Field(
-        None, description="찜하기 생성 시간"
-    )  # None 허용
 
 
 # 유저가 찜한 매물 목록 조회 스키마
@@ -213,5 +210,5 @@ class ProductDetailAllResponseSchema(Schema):
 
 # 매물 삭제 응답 스키마
 class ProductDeleteResponseSchema(Schema):
-    success: bool = Field(..., description="삭제 처리 성공 여부")
-    message: str = Field(..., description="응답 메시지")
+    success: bool
+    message: str
