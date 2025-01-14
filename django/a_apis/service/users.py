@@ -150,6 +150,9 @@ class UserService:
                     data={
                         "success": False,
                         "message": "탈퇴한 사용자입니다.",
+                        "user": {
+                            "is_active": user.is_active,
+                        },
                     },
                 )
             else:
@@ -285,7 +288,7 @@ class UserService:
             )
 
     @staticmethod
-    def withdraw_user(request, data: WithdrawalSchema):
+    def withdraw_user(request):
         try:
             user = request.auth
             if not user:
@@ -311,17 +314,6 @@ class UserService:
                         "message": "인증되지 않은 사용자입니다.",
                     },
                 )
-
-            # 비밀번호 확인
-            if not user.is_social_login:
-                if not user.check_password(data.password):
-                    return Response(
-                        status=400,
-                        data={
-                            "success": False,
-                            "message": "비밀번호가 일치하지 않습니다.",
-                        },
-                    )
 
             # 소프트 딜리트 처리
             user.is_active = False
