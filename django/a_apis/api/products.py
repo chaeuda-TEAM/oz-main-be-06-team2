@@ -2,6 +2,7 @@ import logging
 from typing import List, Optional
 
 from a_apis.auth.bearer import AuthBearer
+from a_apis.auth.decorators import optional_auth
 from a_apis.models import ProductDetail
 from a_apis.schema.products import (
     MyProductsSchemaResponseSchema,
@@ -286,6 +287,7 @@ def eum_check(request):
 
 
 @public_router.get("/detail/{product_id}", response=ProductDetailAllResponseSchema)
+@optional_auth
 def get_product_detail(request, product_id: int):
     """
     매물 상세 정보 조회 API
@@ -308,10 +310,7 @@ def get_product_detail(request, product_id: int):
     ```
     """
     try:
-        user = request.user if request.user.is_authenticated else None
-
-        return ProductService.get_product_detail(user, product_id)
-
+        return ProductService.get_product_detail(request.user, product_id)
     except HttpError as e:
         return Response({"success": False, "message": str(e)}, status=e.status_code)
     except Exception as e:
@@ -321,6 +320,7 @@ def get_product_detail(request, product_id: int):
 
 
 @public_router.get("/nearby", response=MyProductsSchemaResponseSchema)
+@optional_auth
 def get_nearby_products(
     request,
     latitude: float,
@@ -351,9 +351,8 @@ def get_nearby_products(
                 status=400,
             )
 
-        user = request.user if request.user.is_authenticated else None
         response_data = ProductService.get_nearby_products(
-            user, latitude, longitude, zoom
+            request.user, latitude, longitude, zoom
         )
         return response_data
     except Exception as e:
