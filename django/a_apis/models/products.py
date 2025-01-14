@@ -147,6 +147,7 @@ class ProductLikes(CommonModel):
         verbose_name="매물 ID",
         related_name="product_likes",  # 매물 -> 찜한 유저 접근
     )
+    is_liked = models.BooleanField(default=False, verbose_name="찜 여부")
     is_deleted = models.BooleanField(default=False, verbose_name="삭제 여부")
 
     class Meta:
