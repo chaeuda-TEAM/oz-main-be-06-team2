@@ -98,7 +98,7 @@ def verify_email(request, data: EmailVerificationSchema):
 
 
 @router.delete("/withdraw", response=ErrorResponseSchema)
-def withdraw(request, data: WithdrawalSchema):
+def withdraw(request):
     """
     회원 탈퇴 엔드포인트
     """
