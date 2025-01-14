@@ -1,6 +1,7 @@
 from typing import Optional
 
 from ninja import Schema
+from pydantic import EmailStr, field_validator, model_validator
 
 
 class EmailVerificationRequestSchema(Schema):
@@ -57,8 +58,15 @@ class WithdrawalSchema(Schema):
 
 
 class EmailVerificationSchema(Schema):
-    email: str
+    email: EmailStr
     code: str
+
+    @field_validator("code")
+    @classmethod
+    def validate_code(cls, v):
+        if not v or len(v) != 6:
+            raise ValueError("유효하지 않은 인증코드입니다 (길이가 6자여야 함)")
+        return v
 
 
 class LogoutSchema(Schema):

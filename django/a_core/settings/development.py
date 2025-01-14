@@ -9,6 +9,7 @@ INSTALLED_APPS += [
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "api.chaeuda.shop"]
 SERVER_BASE_URL = "http://localhost:3000"
 
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
