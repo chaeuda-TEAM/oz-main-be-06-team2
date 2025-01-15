@@ -546,7 +546,7 @@ class ProductService:
                 product=ProductInformationResponseSchema(
                     product_id=product.id,
                     user=UserDetailSchema(
-                        id=product.user.id,
+                        email=product.user.email,
                         username=product.user.username,
                         phone_number=product.user.phone_number,
                     ),
