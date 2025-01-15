@@ -167,7 +167,7 @@ class MyProductsSchemaResponseSchema(Schema):
 
 # 매물 상세조회를 위한 유저 정보 스키마
 class UserDetailSchema(Schema):
-    id: int = Field(..., description="유저 ID")
+    email: str = Field(..., description="유저 이메일")
     username: str = Field(..., description="유저 이름")
     phone_number: str = Field(..., description="유저 휴대폰번호")
 
